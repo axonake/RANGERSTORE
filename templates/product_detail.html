@@ -1,0 +1,907 @@
+{% extends "base.html" %}
+
+{% block title %}{{ product.name }} - Line Ranger ID Store{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Product Detail Page */
+    .detail-page {
+        min-height: calc(100vh - 200px);
+        padding: var(--spacing-2xl) 0;
+        position: relative;
+    }
+
+    .detail-page::before {
+        content: '';
+        position: absolute;
+        top: -100px;
+        right: -200px;
+        width: 600px;
+        height: 600px;
+        background: radial-gradient(circle, rgba(16, 185, 129, 0.1) 0%, transparent 60%);
+        pointer-events: none;
+        z-index: 0;
+    }
+
+    /* Back Button */
+    .back-link {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+        color: var(--text-secondary);
+        font-size: 0.938rem;
+        font-weight: 500;
+        margin-bottom: var(--spacing-xl);
+        transition: color 0.2s ease;
+    }
+
+    .back-link:hover {
+        color: var(--primary);
+    }
+
+    .back-link i {
+        transition: transform 0.2s ease;
+    }
+
+    .back-link:hover i {
+        transform: translateX(-4px);
+    }
+
+    /* Product Container */
+    .product-container {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: var(--spacing-2xl);
+        position: relative;
+        z-index: 1;
+    }
+
+    @media (max-width: 900px) {
+        .product-container {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    /* Image Gallery */
+    .product-gallery {
+        position: sticky;
+        top: 100px;
+        height: fit-content;
+    }
+
+    .main-image {
+        position: relative;
+        border-radius: var(--radius-xl);
+        overflow: hidden;
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        aspect-ratio: 1/1;
+    }
+
+    .main-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.5s ease;
+    }
+
+    .main-image:hover img {
+        transform: scale(1.05);
+    }
+
+    .main-image-placeholder {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, var(--bg-elevated), var(--bg-card));
+    }
+
+    .main-image-placeholder i {
+        font-size: 100px;
+        color: var(--border-light);
+        opacity: 0.5;
+    }
+
+    .sold-overlay {
+        position: absolute;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.7);
+        backdrop-filter: blur(4px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .sold-badge {
+        padding: var(--spacing-md) var(--spacing-xl);
+        background: linear-gradient(135deg, #ef4444, #dc2626);
+        border-radius: var(--radius-lg);
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: white;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+    }
+
+    .image-badge {
+        position: absolute;
+        top: var(--spacing-md);
+        left: var(--spacing-md);
+        padding: var(--spacing-xs) var(--spacing-md);
+        background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+        border-radius: var(--radius-full);
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: white;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    /* Product Info */
+    .product-info {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .product-file-id {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--spacing-xs);
+        padding: var(--spacing-xs) var(--spacing-md);
+        background: var(--bg-elevated);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-full);
+        font-size: 0.813rem;
+        font-family: monospace;
+        color: var(--text-muted);
+        margin-bottom: var(--spacing-md);
+        width: fit-content;
+    }
+
+    .product-file-id i {
+        color: var(--primary);
+    }
+
+    .product-title {
+        font-size: clamp(2rem, 4vw, 3rem);
+        font-weight: 800;
+        line-height: 1.2;
+        margin-bottom: var(--spacing-lg);
+        letter-spacing: -0.02em;
+    }
+
+    .product-price-box {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-lg);
+        padding: var(--spacing-lg);
+        background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(16, 185, 129, 0.05));
+        border: 1px solid rgba(16, 185, 129, 0.3);
+        border-radius: var(--radius-xl);
+        margin-bottom: var(--spacing-xl);
+    }
+
+    .price-label {
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .price-value {
+        font-size: 2.5rem;
+        font-weight: 800;
+        color: var(--primary);
+    }
+
+    .price-info {
+        margin-left: auto;
+        text-align: right;
+    }
+
+    .price-info-text {
+        font-size: 0.813rem;
+        color: var(--text-muted);
+    }
+
+    /* Description */
+    .description-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-xl);
+        padding: var(--spacing-xl);
+        margin-bottom: var(--spacing-xl);
+    }
+
+    .description-header {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+        font-size: 1.125rem;
+        font-weight: 700;
+        margin-bottom: var(--spacing-md);
+        padding-bottom: var(--spacing-md);
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .description-header i {
+        color: var(--primary);
+    }
+
+    .description-content {
+        color: var(--text-secondary);
+        line-height: 1.8;
+        white-space: pre-line;
+    }
+
+    /* Features List */
+    .features-list {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: var(--spacing-md);
+        margin-bottom: var(--spacing-xl);
+    }
+
+    @media (max-width: 500px) {
+        .features-list {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .feature-item {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+        padding: var(--spacing-md);
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-lg);
+    }
+
+    .feature-item i {
+        color: var(--primary);
+        flex-shrink: 0;
+    }
+
+    .feature-item span {
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+    }
+
+    /* Action Buttons */
+    .action-buttons {
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-md);
+        margin-top: auto;
+    }
+
+    .buy-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: var(--spacing-sm);
+        padding: var(--spacing-lg);
+        background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+        border: none;
+        border-radius: var(--radius-xl);
+        color: white;
+        font-size: 1.125rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 8px 30px rgba(16, 185, 129, 0.4);
+    }
+
+    .buy-btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 12px 40px rgba(16, 185, 129, 0.5);
+    }
+
+    .buy-btn:disabled {
+        background: var(--bg-elevated);
+        color: var(--text-muted);
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+    }
+
+    .login-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: var(--spacing-sm);
+        padding: var(--spacing-lg);
+        background: var(--bg-elevated);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-xl);
+        color: var(--text-primary);
+        font-size: 1rem;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.2s ease;
+    }
+
+    .login-btn:hover {
+        background: var(--bg-hover);
+        border-color: var(--border-light);
+    }
+
+    .guarantee-text {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: var(--spacing-sm);
+        font-size: 0.875rem;
+        color: var(--text-muted);
+        margin-top: var(--spacing-md);
+    }
+
+    .guarantee-text i {
+        color: var(--primary);
+    }
+
+    /* Modal Styles */
+    .buy-modal .modal {
+        max-width: 450px;
+    }
+
+    .modal-product-preview {
+        display: flex;
+        gap: var(--spacing-md);
+        padding: var(--spacing-md);
+        background: var(--bg-elevated);
+        border-radius: var(--radius-lg);
+        margin-bottom: var(--spacing-xl);
+    }
+
+    .modal-product-image {
+        width: 80px;
+        height: 80px;
+        border-radius: var(--radius-md);
+        overflow: hidden;
+        background: var(--bg-card);
+        flex-shrink: 0;
+    }
+
+    .modal-product-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .modal-product-image-placeholder {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .modal-product-image-placeholder i {
+        color: var(--text-muted);
+    }
+
+    .modal-product-info {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .modal-product-name {
+        font-size: 1rem;
+        font-weight: 600;
+        margin-bottom: 4px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .modal-product-id {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        font-family: monospace;
+        margin-bottom: var(--spacing-sm);
+    }
+
+    .modal-product-price {
+        font-size: 1.25rem;
+        font-weight: 800;
+        color: var(--primary);
+    }
+
+    /* Payment Method */
+    .payment-section {
+        margin-bottom: var(--spacing-xl);
+    }
+
+    .payment-label {
+        font-size: 0.938rem;
+        font-weight: 600;
+        color: var(--text-secondary);
+        margin-bottom: var(--spacing-md);
+        display: block;
+    }
+
+    .payment-options {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: var(--spacing-md);
+    }
+
+    .payment-option {
+        position: relative;
+        cursor: pointer;
+    }
+
+    .payment-option input {
+        position: absolute;
+        opacity: 0;
+        pointer-events: none;
+    }
+
+    .payment-card {
+        padding: var(--spacing-lg);
+        background: var(--bg-elevated);
+        border: 2px solid var(--border-color);
+        border-radius: var(--radius-lg);
+        text-align: center;
+        transition: all 0.2s ease;
+    }
+
+    .payment-option:hover .payment-card {
+        border-color: var(--border-light);
+    }
+
+    .payment-option input:checked+.payment-card {
+        border-color: var(--primary);
+        background: rgba(16, 185, 129, 0.1);
+    }
+
+    .payment-option input:disabled+.payment-card {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .payment-icon {
+        width: 40px;
+        height: 40px;
+        margin: 0 auto var(--spacing-sm);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .payment-icon i {
+        font-size: 24px;
+    }
+
+    .payment-icon.balance i {
+        color: var(--primary);
+    }
+
+    .payment-icon.promptpay i {
+        color: var(--text-muted);
+    }
+
+    .payment-name {
+        font-weight: 600;
+        margin-bottom: 4px;
+    }
+
+    .payment-balance {
+        font-size: 0.938rem;
+        color: var(--primary);
+        font-weight: 700;
+    }
+
+    .payment-status {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+    }
+
+    /* Balance Alert */
+    .balance-alert {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-md);
+        padding: var(--spacing-md);
+        background: rgba(245, 158, 11, 0.1);
+        border: 1px solid rgba(245, 158, 11, 0.3);
+        border-radius: var(--radius-lg);
+        margin-bottom: var(--spacing-lg);
+    }
+
+    .balance-alert i {
+        color: #f59e0b;
+        flex-shrink: 0;
+    }
+
+    .balance-alert-text {
+        flex: 1;
+    }
+
+    .balance-alert-text strong {
+        color: #f59e0b;
+    }
+
+    .balance-alert a {
+        color: var(--primary);
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    /* Info Box */
+    .info-box {
+        display: flex;
+        align-items: flex-start;
+        gap: var(--spacing-sm);
+        padding: var(--spacing-md);
+        background: rgba(16, 185, 129, 0.1);
+        border: 1px solid rgba(16, 185, 129, 0.2);
+        border-radius: var(--radius-lg);
+    }
+
+    .info-box i {
+        color: var(--primary);
+        flex-shrink: 0;
+        margin-top: 2px;
+    }
+
+    .info-box p {
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+        line-height: 1.5;
+    }
+
+    /* Modal Footer */
+    .modal-actions {
+        display: flex;
+        gap: var(--spacing-md);
+        padding-top: var(--spacing-lg);
+        border-top: 1px solid var(--border-color);
+        margin-top: var(--spacing-lg);
+    }
+
+    .modal-btn {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: var(--spacing-sm);
+        padding: var(--spacing-md);
+        border-radius: var(--radius-lg);
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        border: none;
+    }
+
+    .modal-btn-cancel {
+        background: var(--bg-elevated);
+        color: var(--text-secondary);
+        border: 1px solid var(--border-color);
+    }
+
+    .modal-btn-cancel:hover {
+        background: var(--bg-hover);
+    }
+
+    .modal-btn-confirm {
+        background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+        color: white;
+        flex: 2;
+    }
+
+    .modal-btn-confirm:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+    }
+
+    .modal-btn-confirm:disabled {
+        background: var(--bg-elevated);
+        color: var(--text-muted);
+        transform: none;
+        box-shadow: none;
+        cursor: not-allowed;
+    }
+
+    /* Loading */
+    .spin {
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        100% {
+            transform: rotate(360deg);
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="detail-page">
+    <div class="container">
+        <!-- Back Link -->
+        <a href="{{ url_for('products') }}" class="back-link">
+            <i data-lucide="arrow-left"></i>
+            <span>กลับไปหน้าสินค้า</span>
+        </a>
+
+        <div class="product-container">
+            <!-- Image Gallery -->
+            <div class="product-gallery">
+                <div class="main-image">
+                    {% if product.image_path %}
+                    <img src="{{ url_for('static', filename='images/' + product.image_path) }}"
+                        alt="{{ product.name }}">
+                    {% else %}
+                    <div class="main-image-placeholder">
+                        <i data-lucide="gamepad-2"></i>
+                    </div>
+                    {% endif %}
+
+                    {% if not product.is_sold %}
+                    <span class="image-badge">พร้อมขาย</span>
+                    {% endif %}
+
+                    {% if product.is_sold %}
+                    <div class="sold-overlay">
+                        <span class="sold-badge">ขายแล้ว</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Product Info -->
+            <div class="product-info">
+                <div class="product-file-id">
+                    <i data-lucide="layers"></i>
+                    <span>สินค้าคงเหลือ: {{ product.stock_count }} ชิ้น</span>
+                </div>
+
+                <h1 class="product-title">{{ product.name }}</h1>
+
+                <div class="product-price-box">
+                    <div>
+                        <div class="price-label">ราคา</div>
+                        <div class="price-value">฿{{ "{:,.0f}".format(product.price) }}</div>
+                    </div>
+                    <div class="price-info">
+                        <div class="price-info-text">รวมค่าบริการแล้ว</div>
+                    </div>
+                </div>
+
+                <!-- Description -->
+                <div class="description-card">
+                    <div class="description-header">
+                        <i data-lucide="file-text"></i>
+                        <span>รายละเอียดสินค้า</span>
+                    </div>
+                    <div class="description-content">{{ product.description or 'ไอดี Line Ranger คุณภาพ Ranger ระดับสูง
+                        พร้อมเล่นได้ทันที' }}</div>
+                </div>
+
+                <!-- Features -->
+                <div class="features-list">
+                    <div class="feature-item">
+                        <i data-lucide="check-circle"></i>
+                        <span>Link ID อัตโนมัติ</span>
+                    </div>
+                    <div class="feature-item">
+                        <i data-lucide="check-circle"></i>
+                        <span>ดำเนินการใน 5 นาที</span>
+                    </div>
+                    <div class="feature-item">
+                        <i data-lucide="check-circle"></i>
+                        <span>รับประกันปลอดภัย</span>
+                    </div>
+                    <div class="feature-item">
+                        <i data-lucide="check-circle"></i>
+                        <span>ซัพพอร์ต 24/7</span>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="action-buttons">
+                    {% if current_user.is_authenticated %}
+                    {% if not product.is_sold %}
+                    <button onclick="openModal('buyModal')" class="buy-btn">
+                        <i data-lucide="shopping-cart"></i>
+                        ซื้อสินค้าทันที
+                    </button>
+                    {% else %}
+                    <button disabled class="buy-btn">
+                        <i data-lucide="x-circle"></i>
+                        สินค้าถูกขายแล้ว
+                    </button>
+                    {% endif %}
+                    {% else %}
+                    <a href="{{ url_for('login', next=request.path) }}" class="login-btn">
+                        <i data-lucide="log-in"></i>
+                        เข้าสู่ระบบเพื่อสั่งซื้อ
+                    </a>
+                    {% endif %}
+
+                    <div class="guarantee-text">
+                        <i data-lucide="shield-check"></i>
+                        <span>รับประกันความปลอดภัย 100% ตรวจสอบโดยทีมงาน</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Buy Confirmation Modal -->
+<div id="buyModal" class="modal-overlay buy-modal">
+    <div class="modal">
+        <div class="modal-header">
+            <h3 class="modal-title">
+                <i data-lucide="shopping-bag"></i>
+                ยืนยันการซื้อ
+            </h3>
+            <button type="button" class="modal-close" onclick="closeModal('buyModal')">
+                <i data-lucide="x"></i>
+            </button>
+        </div>
+
+        <div class="modal-body">
+            <!-- Product Preview -->
+            <div class="modal-product-preview">
+                <div class="modal-product-image">
+                    {% if product.image_path %}
+                    <img src="{{ url_for('static', filename='images/' + product.image_path) }}"
+                        alt="{{ product.name }}">
+                    {% else %}
+                    <div class="modal-product-image-placeholder">
+                        <i data-lucide="gamepad-2"></i>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="modal-product-info">
+                    <div class="modal-product-name">{{ product.name }}</div>
+                    <div class="modal-product-id">
+                        <i data-lucide="check-circle" style="width: 12px; height: 12px; display: inline-block;"></i>
+                        สินค้าพร้อมส่งทันที
+                    </div>
+                    <div class="modal-product-price">฿{{ "{:,.0f}".format(product.price) }}</div>
+                </div>
+            </div>
+
+            <!-- Payment Method -->
+            <div class="payment-section">
+                <label class="payment-label">เลือกวิธีชำระเงิน</label>
+                <div class="payment-options">
+                    <label class="payment-option">
+                        <input type="radio" name="pay_method" value="balance" checked onchange="updatePayMethod(this)">
+                        <div class="payment-card">
+                            <div class="payment-icon balance">
+                                <i data-lucide="wallet"></i>
+                            </div>
+                            <div class="payment-name">Balance</div>
+                            <div class="payment-balance">฿{{ "{:,.2f}".format(current_user.balance or 0) }}</div>
+                        </div>
+                    </label>
+                    <label class="payment-option">
+                        <input type="radio" name="pay_method" value="promptpay" disabled>
+                        <div class="payment-card">
+                            <div class="payment-icon promptpay">
+                                <i data-lucide="qr-code"></i>
+                            </div>
+                            <div class="payment-name">PromptPay</div>
+                            <div class="payment-status">(Coming Soon)</div>
+                        </div>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Balance Warning -->
+            <div class="balance-alert" id="balanceAlert" style="display: none;">
+                <i data-lucide="alert-circle"></i>
+                <div class="balance-alert-text">
+                    <strong>ยอดเงินไม่เพียงพอ</strong> (ขาด ฿<span id="diffAmount">0</span>)
+                </div>
+                <a href="{{ url_for('topup_page') }}">เติมเงิน →</a>
+            </div>
+
+            <!-- Info Box -->
+            <div class="info-box">
+                <i data-lucide="info"></i>
+                <p>หลังจากซื้อแล้ว สามารถกด <strong>Link ID</strong> หรือ <strong>Download XML</strong> ได้ที่หน้า
+                    "คลังของฉัน"</p>
+            </div>
+        </div>
+
+        <div class="modal-actions">
+            <button type="button" class="modal-btn modal-btn-cancel" onclick="closeModal('buyModal')">
+                ยกเลิก
+            </button>
+            <button type="button" id="confirmBuyBtn" class="modal-btn modal-btn-confirm" onclick="confirmPurchase()">
+                <i data-lucide="check"></i>
+                ยืนยันการซื้อ
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Loading Overlay -->
+<div id="loadingOverlay" class="modal-overlay" style="z-index: 2000;">
+    <div class="modal" style="text-align: center; padding: 40px; max-width: 360px;">
+        <i data-lucide="loader" class="spin"
+            style="width: 48px; height: 48px; color: var(--primary); margin-bottom: 20px;"></i>
+        <h3 id="loadingTitle">กำลังดำเนินการ...</h3>
+        <p id="loadingStatus" style="color: var(--text-secondary); margin-top: 10px;">รอสักครู่...</p>
+    </div>
+</div>
+
+<script>
+    const userBalance = {{ current_user.balance if current_user.is_authenticated else 0 }};
+    const productPrice = {{ product.price }};
+
+    function updatePayMethod(radio) {
+        const alertBox = document.getElementById('balanceAlert');
+        const submitBtn = document.getElementById('confirmBuyBtn');
+
+        if (radio.value === 'balance') {
+            if (userBalance < productPrice) {
+                const diff = (productPrice - userBalance).toFixed(2);
+                document.getElementById('diffAmount').innerText = diff;
+                alertBox.style.display = 'flex';
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i data-lucide="x"></i> ยอดเงินไม่เพียงพอ';
+                lucide.createIcons();
+            } else {
+                alertBox.style.display = 'none';
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i data-lucide="check"></i> ยืนยันการซื้อ';
+                lucide.createIcons();
+            }
+        }
+    }
+
+    // Run on load
+    document.addEventListener('DOMContentLoaded', () => {
+        const balanceRadio = document.querySelector('input[name="pay_method"][value="balance"]');
+        if (balanceRadio && balanceRadio.checked) updatePayMethod(balanceRadio);
+    });
+
+    async function confirmPurchase() {
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        const loadingStatus = document.getElementById('loadingStatus');
+        const modal = document.getElementById('buyModal');
+
+        modal.classList.remove('active');
+        loadingOverlay.classList.add('active');
+        loadingStatus.textContent = "กำลังสร้างออเดอร์...";
+
+        try {
+            const formData = new FormData();
+            formData.append('pay_method', 'balance');
+
+            const response = await fetch("{{ url_for('buy_product', product_id=product.id) }}", {
+                method: 'POST',
+                body: formData
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                loadingStatus.textContent = "สำเร็จ! กำลังไปหน้าคลังของฉัน...";
+                setTimeout(() => {
+                    window.location.href = "{{ url_for('inventory') }}";
+                }, 1000);
+            } else {
+                loadingOverlay.classList.remove('active');
+                alert("❌ " + (data.message || "เกิดข้อผิดพลาด"));
+            }
+        } catch (error) {
+            console.error(error);
+            loadingOverlay.classList.remove('active');
+            alert("❌ เกิดข้อผิดพลาด: " + error.message);
+        }
+    }
+</script>
+{% endblock %}

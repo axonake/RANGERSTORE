@@ -1,0 +1,209 @@
+{% extends "base.html" %}
+
+{% block title %}เข้าสู่ระบบ - Line Ranger ID Store{% endblock %}
+
+{% block extra_css %}
+<style>
+    .auth-page {
+        min-height: calc(100vh - 140px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: radial-gradient(circle at top right, rgba(16, 185, 129, 0.1), transparent 40%),
+            radial-gradient(circle at bottom left, rgba(59, 130, 246, 0.1), transparent 40%);
+        padding: var(--spacing-md);
+    }
+
+    .auth-card {
+        width: 100%;
+        max-width: 420px;
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-xl);
+        padding: 40px;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .auth-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 4px;
+        background: linear-gradient(90deg, var(--primary), #3b82f6);
+    }
+
+    .auth-header {
+        text-align: center;
+        margin-bottom: 32px;
+    }
+
+    .auth-logo {
+        width: 64px;
+        height: 64px;
+        background: linear-gradient(135deg, var(--bg-elevated), var(--bg-card));
+        border: 1px solid var(--border-color);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 16px;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+    }
+
+    .auth-logo i {
+        color: var(--primary);
+    }
+
+    .auth-title {
+        font-size: 1.75rem;
+        font-weight: 800;
+        margin-bottom: 8px;
+        background: linear-gradient(to right, white, var(--text-secondary));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    .auth-subtitle {
+        color: var(--text-muted);
+        font-size: 0.938rem;
+    }
+
+    .auth-form .form-group {
+        margin-bottom: 20px;
+    }
+
+    .input-group {
+        position: relative;
+    }
+
+    .input-icon {
+        position: absolute;
+        left: 16px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--text-muted);
+        pointer-events: none;
+        transition: color 0.2s ease;
+    }
+
+    .auth-input {
+        width: 100%;
+        padding: 14px 16px 14px 48px;
+        background: var(--bg-elevated);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-lg);
+        color: white;
+        font-size: 1rem;
+        transition: all 0.2s ease;
+    }
+
+    .auth-input:focus {
+        outline: none;
+        border-color: var(--primary);
+        background: var(--bg-card);
+        box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1);
+    }
+
+    .auth-input:focus+.input-icon {
+        color: var(--primary);
+    }
+
+    .auth-input::placeholder {
+        color: rgba(255, 255, 255, 0.3);
+    }
+
+    .btn-submit {
+        width: 100%;
+        padding: 14px;
+        background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+        color: white;
+        border: none;
+        border-radius: var(--radius-lg);
+        font-size: 1rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        margin-top: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+    }
+
+    .btn-submit:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(16, 185, 129, 0.5);
+    }
+
+    .auth-footer {
+        text-align: center;
+        margin-top: 24px;
+        padding-top: 24px;
+        border-top: 1px solid var(--border-color);
+        font-size: 0.938rem;
+        color: var(--text-muted);
+    }
+
+    .auth-link {
+        color: var(--primary);
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.2s ease;
+    }
+
+    .auth-link:hover {
+        text-decoration: underline;
+        color: var(--primary-light);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="auth-page">
+    <div class="auth-card">
+        <div class="auth-header">
+            <div class="auth-logo">
+                <i data-lucide="lock" style="width: 32px; height: 32px;"></i>
+            </div>
+            <h1 class="auth-title">ยินดีต้อนรับกลับ</h1>
+            <p class="auth-subtitle">เข้าสู่ระบบเพื่อจัดการไอดีของคุณ</p>
+        </div>
+
+        <form method="POST" action="{{ url_for('login', next=request.args.get('next')) }}" class="auth-form">
+            <div class="form-group">
+                <label class="form-label" style="display: none;">ชื่อผู้ใช้</label>
+                <div class="input-group">
+                    <input type="text" id="username" name="username" class="auth-input" placeholder="ชื่อผู้ใช้"
+                        required>
+                    <i data-lucide="user" class="input-icon" style="width: 20px;"></i>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" style="display: none;">รหัสผ่าน</label>
+                <div class="input-group">
+                    <input type="password" id="password" name="password" class="auth-input" placeholder="รหัสผ่าน"
+                        required>
+                    <i data-lucide="key" class="input-icon" style="width: 20px;"></i>
+                </div>
+            </div>
+
+            <button type="submit" class="btn-submit">
+                <span>เข้าสู่ระบบ</span>
+                <i data-lucide="arrow-right" style="width: 18px;"></i>
+            </button>
+        </form>
+
+        <div class="auth-footer">
+            ยังไม่มีบัญชี? <a href="{{ url_for('register') }}" class="auth-link">สมัครสมาชิก</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

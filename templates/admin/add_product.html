@@ -1,0 +1,358 @@
+{% extends "base.html" %}
+
+{% block title %}เพิ่มสินค้าใหม่ - Line Ranger ID Store{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Add Product Page */
+    .form-page {
+        padding: var(--spacing-2xl) 0;
+        display: flex;
+        justify-content: center;
+    }
+
+    .form-card {
+        width: 100%;
+        max-width: 600px;
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-xl);
+        padding: var(--spacing-xl);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+    }
+
+    .form-header {
+        text-align: center;
+        margin-bottom: var(--spacing-xl);
+        padding-bottom: var(--spacing-lg);
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .form-header h2 {
+        font-size: 1.75rem;
+        font-weight: 700;
+        margin-bottom: 8px;
+    }
+
+    .form-header p {
+        color: var(--text-secondary);
+    }
+
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: var(--spacing-lg);
+        margin-bottom: var(--spacing-lg);
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .form-label {
+        font-weight: 500;
+        font-size: 0.938rem;
+        color: var(--text-secondary);
+    }
+
+    .form-control {
+        padding: 12px 16px;
+        background: var(--bg-elevated);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-lg);
+        color: var(--text-primary);
+        font-size: 1rem;
+        transition: all 0.2s ease;
+    }
+
+    .form-control:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+    }
+
+    textarea.form-control {
+        resize: vertical;
+        min-height: 100px;
+    }
+
+    /* Custom File Input */
+    .file-upload-box {
+        position: relative;
+        border: 2px dashed var(--border-color);
+        border-radius: var(--radius-lg);
+        padding: var(--spacing-xl);
+        text-align: center;
+        transition: all 0.2s ease;
+        background: var(--bg-elevated);
+        cursor: pointer;
+    }
+
+    .file-upload-box:hover {
+        border-color: var(--primary);
+        background: rgba(16, 185, 129, 0.05);
+    }
+
+    .file-upload-box input[type="file"] {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        opacity: 0;
+        cursor: pointer;
+    }
+
+    .upload-content {
+        pointer-events: none;
+    }
+
+    .upload-icon {
+        width: 48px;
+        height: 48px;
+        background: var(--bg-card);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 12px;
+        color: var(--text-muted);
+    }
+
+    .file-upload-box:hover .upload-icon {
+        color: var(--primary);
+        transform: scale(1.1);
+    }
+
+    .upload-text {
+        font-weight: 500;
+        margin-bottom: 4px;
+    }
+
+    .upload-hint {
+        font-size: 0.813rem;
+        color: var(--text-muted);
+    }
+
+    .preview-area {
+        margin-top: 16px;
+        display: none;
+    }
+
+    .preview-img {
+        max-width: 100%;
+        height: 200px;
+        object-fit: cover;
+        border-radius: var(--radius-lg);
+        border: 1px solid var(--border-color);
+    }
+
+    .selected-file-name {
+        margin-top: 8px;
+        font-size: 0.875rem;
+        color: var(--primary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+    }
+
+    .form-actions {
+        display: flex;
+        gap: var(--spacing-md);
+        margin-top: var(--spacing-xl);
+    }
+
+    .btn-cancel {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 12px;
+        border-radius: var(--radius-lg);
+        background: var(--bg-elevated);
+        color: var(--text-secondary);
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.2s ease;
+    }
+
+    .btn-cancel:hover {
+        background: var(--bg-hover);
+        color: var(--text-primary);
+    }
+
+    .btn-submit {
+        flex: 2;
+        background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+        color: white;
+        border: none;
+        font-size: 1rem;
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+    }
+
+    .btn-submit:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(16, 185, 129, 0.4);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="form-page">
+    <div class="form-card">
+        <div class="form-header">
+            <h2><i data-lucide="plus-circle" style="vertical-align: middle; margin-right: 8px;"></i>เพิ่มสินค้าใหม่</h2>
+            <p>กรอกข้อมูลเพื่อลงขายไอดี Line Ranger</p>
+        </div>
+
+        <form method="POST" action="{{ url_for('add_product') }}" enctype="multipart/form-data">
+            <!-- Product Name -->
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label" for="name">ชื่อสินค้า <span style="color: #ef4444;">*</span></label>
+                    <input type="text" id="name" name="name" class="form-control"
+                        placeholder="เช่น: ไอดีเทพ Ranger 8 ดาว 20 ตัว" required>
+                </div>
+            </div>
+
+            <!-- Description -->
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label" for="description">รายละเอียดสินค้า</label>
+                    <textarea id="description" name="description" class="form-control" rows="4"
+                        placeholder="บอกรายละเอียดเพิ่มเติมเกี่ยวกับไอดีนี้..."></textarea>
+                </div>
+            </div>
+
+            <!-- Price -->
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label" for="price">ราคาขาย (บาท) <span style="color: #ef4444;">*</span></label>
+                    <div style="position: relative;">
+                        <span style="position: absolute; left: 16px; top: 12px; color: var(--text-muted);">฿</span>
+                        <input type="number" id="price" name="price" class="form-control" style="padding-left: 32px;"
+                            placeholder="0.00" step="0.01" min="0" required>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Image Upload -->
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">รูปภาพหน้าปก</label>
+                    <div class="file-upload-box">
+                        <input type="file" id="image" name="image" accept="image/png,image/jpeg,image/gif"
+                            onchange="handleImagePreview(this)">
+                        <div class="upload-content">
+                            <div class="upload-icon">
+                                <i data-lucide="image"></i>
+                            </div>
+                            <div class="upload-text">คลิกเพื่ออัพโหลดรูปภาพ</div>
+                            <div class="upload-hint">PNG, JPG, GIF (Max 5MB)</div>
+                        </div>
+                    </div>
+                    <!-- Image Preview -->
+                    <div id="imagePreviewContainer" class="preview-area">
+                        <img id="imagePreview" src="" alt="Preview" class="preview-img">
+                    </div>
+                </div>
+            </div>
+
+            <!-- XML Upload -->
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">ไฟล์ XML (สำหรับ Link ID) <span style="color: #ef4444;">*</span></label>
+                    <div class="file-upload-box" style="border-style: dashed; border-color: var(--border-color);">
+                        <input type="file" id="xml_files" name="xml_files[]" accept=".xml" multiple required
+                            onchange="handleFilesSelect(this)">
+                        <div class="upload-content">
+                            <div class="upload-icon">
+                                <i data-lucide="files"></i>
+                            </div>
+                            <div class="upload-text">อัพโหลดไฟล์ .xml</div>
+                            <div class="upload-hint">ลากไฟล์ลงที่นี่ หรือคลิกเพื่อเลือก (เลือกได้หลายไฟล์)</div>
+                        </div>
+                    </div>
+                    <!-- File List Preview -->
+                    <div id="fileListPreview" class="file-list-preview"></div>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="form-actions">
+                <a href="{{ url_for('admin_products') }}" class="btn-cancel">
+                    ยกเลิก
+                </a>
+                <button type="submit" class="btn btn-primary btn-submit">
+                    <i data-lucide="check"></i>
+                    บันทึกและลงขาย
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function handleImagePreview(input) {
+        const previewContainer = document.getElementById('imagePreviewContainer');
+        const previewImage = document.getElementById('imagePreview');
+
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                previewImage.src = e.target.result;
+                previewContainer.style.display = 'block';
+            }
+            reader.readAsDataURL(input.files[0]);
+        } else {
+            previewContainer.style.display = 'none';
+        }
+    }
+
+    function handleFilesSelect(input) {
+        const preview = document.getElementById('fileListPreview');
+        preview.innerHTML = ''; // Clear previous
+
+        if (input.files && input.files.length > 0) {
+            const list = document.createElement('div');
+            list.style.cssText = `
+                display: flex; 
+                flex-direction: column; 
+                gap: 8px; 
+                margin-top: 16px;
+                background: var(--bg-elevated);
+                padding: 12px;
+                border-radius: var(--radius-lg);
+                border: 1px solid var(--border-color);
+            `;
+
+            // Header info
+            const header = document.createElement('div');
+            header.innerHTML = `<strong style="color: var(--primary); font-size: 0.875rem;">เลือกแล้ว ${input.files.length} ไฟล์:</strong>`;
+            list.appendChild(header);
+
+            // List files
+            Array.from(input.files).forEach(file => {
+                const item = document.createElement('div');
+                item.style.cssText = `
+                    display: flex; 
+                    align-items: center; 
+                    gap: 8px; 
+                    font-size: 0.813rem; 
+                    color: var(--text-secondary);
+                    padding: 4px 0;
+                    border-bottom: 1px solid rgba(255,255,255,0.05);
+                `;
+                item.innerHTML = `<i data-lucide="file-code" style="width: 14px; color: var(--text-muted);"></i> <span>${file.name}</span> <span style="margin-left:auto; color: var(--text-muted); font-size: 0.75rem;">${(file.size / 1024).toFixed(1)} KB</span>`;
+                list.appendChild(item);
+            });
+
+            preview.appendChild(list);
+            lucide.createIcons();
+        }
+    }
+</script>
+{% endblock %}

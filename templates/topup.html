@@ -1,0 +1,696 @@
+{% extends "base.html" %}
+
+{% block title %}เติมเงิน | Line Ranger ID Store{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Topup Page Premium Styles */
+    .topup-page {
+        min-height: calc(100vh - 200px);
+        padding: var(--spacing-2xl) 0;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .topup-page::before {
+        content: '';
+        position: absolute;
+        top: -200px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 800px;
+        height: 800px;
+        background: radial-gradient(circle, rgba(16, 185, 129, 0.15) 0%, transparent 70%);
+        pointer-events: none;
+        z-index: 0;
+    }
+
+    .topup-container {
+        max-width: 1000px;
+        margin: 0 auto;
+        display: grid;
+        grid-template-columns: 1fr 1.2fr;
+        gap: var(--spacing-xl);
+        position: relative;
+        z-index: 1;
+    }
+
+    @media (max-width: 768px) {
+        .topup-container {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    /* Balance Card */
+    .balance-card {
+        background: linear-gradient(145deg, rgba(16, 185, 129, 0.15) 0%, rgba(16, 185, 129, 0.05) 100%);
+        border: 1px solid rgba(16, 185, 129, 0.3);
+        border-radius: var(--radius-xl);
+        padding: var(--spacing-xl);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .balance-card::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 200px;
+        height: 200px;
+        background: radial-gradient(circle, rgba(16, 185, 129, 0.3) 0%, transparent 70%);
+        pointer-events: none;
+    }
+
+    .balance-header {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-md);
+        margin-bottom: var(--spacing-lg);
+    }
+
+    .balance-icon {
+        width: 56px;
+        height: 56px;
+        background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+        border-radius: var(--radius-lg);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 8px 24px rgba(16, 185, 129, 0.4);
+    }
+
+    .balance-icon i {
+        color: white;
+        font-size: 28px;
+    }
+
+    .balance-title {
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 4px;
+    }
+
+    .balance-label {
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+
+    .balance-amount {
+        font-size: clamp(2.5rem, 5vw, 3.5rem);
+        font-weight: 800;
+        background: linear-gradient(135deg, #10b981, #34d399);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: var(--spacing-lg);
+        display: flex;
+        align-items: baseline;
+        gap: var(--spacing-sm);
+    }
+
+    .balance-amount .currency {
+        font-size: 1.5rem;
+        font-weight: 600;
+        opacity: 0.8;
+    }
+
+    .balance-meta {
+        display: flex;
+        gap: var(--spacing-lg);
+        padding-top: var(--spacing-md);
+        border-top: 1px solid rgba(16, 185, 129, 0.2);
+    }
+
+    .balance-stat {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    .balance-stat-label {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .balance-stat-value {
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+
+    /* Topup Form Card */
+    .topup-form-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-xl);
+        overflow: hidden;
+    }
+
+    .topup-form-header {
+        background: linear-gradient(135deg, var(--bg-elevated), var(--bg-card));
+        padding: var(--spacing-lg) var(--spacing-xl);
+        border-bottom: 1px solid var(--border-color);
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-md);
+    }
+
+    .topup-form-header-icon {
+        width: 44px;
+        height: 44px;
+        background: rgba(245, 158, 11, 0.15);
+        border-radius: var(--radius-md);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .topup-form-header-icon i {
+        color: #f59e0b;
+        font-size: 22px;
+    }
+
+    .topup-form-header-text h2 {
+        font-size: 1.125rem;
+        font-weight: 700;
+        margin-bottom: 2px;
+    }
+
+    .topup-form-header-text p {
+        font-size: 0.813rem;
+        color: var(--text-muted);
+    }
+
+    .topup-form-body {
+        padding: var(--spacing-xl);
+    }
+
+    .input-wrapper {
+        position: relative;
+        margin-bottom: var(--spacing-lg);
+    }
+
+    .input-wrapper label {
+        display: block;
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: var(--text-secondary);
+        margin-bottom: var(--spacing-sm);
+    }
+
+    .input-with-icon {
+        position: relative;
+    }
+
+    .input-with-icon input {
+        width: 100%;
+        padding: var(--spacing-md) var(--spacing-lg);
+        padding-left: 52px;
+        background: var(--bg-elevated);
+        border: 2px solid var(--border-color);
+        border-radius: var(--radius-lg);
+        color: var(--text-primary);
+        font-size: 1rem;
+        font-family: 'Inter', monospace;
+        transition: all 0.2s ease;
+    }
+
+    .input-with-icon input:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.15);
+    }
+
+    .input-with-icon input::placeholder {
+        color: var(--text-muted);
+        font-size: 0.875rem;
+    }
+
+    .input-icon {
+        position: absolute;
+        left: 16px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--text-muted);
+        pointer-events: none;
+    }
+
+    .input-hint {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+        margin-top: var(--spacing-sm);
+        font-size: 0.813rem;
+        color: var(--text-muted);
+    }
+
+    .input-hint i {
+        color: var(--primary);
+        flex-shrink: 0;
+    }
+
+    .submit-btn {
+        width: 100%;
+        padding: var(--spacing-md) var(--spacing-xl);
+        background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+        border: none;
+        border-radius: var(--radius-lg);
+        color: white;
+        font-size: 1rem;
+        font-weight: 700;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: var(--spacing-sm);
+        transition: all 0.2s ease;
+        box-shadow: 0 4px 20px rgba(16, 185, 129, 0.4);
+    }
+
+    .submit-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 30px rgba(16, 185, 129, 0.5);
+    }
+
+    .submit-btn:active {
+        transform: translateY(0);
+    }
+
+    /* Supported Methods */
+    .supported-methods {
+        margin-top: var(--spacing-lg);
+        padding-top: var(--spacing-lg);
+        border-top: 1px solid var(--border-color);
+    }
+
+    .supported-methods-title {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: var(--text-muted);
+        margin-bottom: var(--spacing-md);
+    }
+
+    .method-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--spacing-sm);
+    }
+
+    .method-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--spacing-xs);
+        padding: var(--spacing-xs) var(--spacing-md);
+        background: var(--bg-elevated);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-full);
+        font-size: 0.813rem;
+        color: var(--text-secondary);
+    }
+
+    .method-tag i {
+        color: var(--primary);
+    }
+
+    /* History Section */
+    .history-section {
+        grid-column: 1 / -1;
+        margin-top: var(--spacing-lg);
+    }
+
+    .history-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-xl);
+        overflow: hidden;
+    }
+
+    .history-header {
+        padding: var(--spacing-lg) var(--spacing-xl);
+        border-bottom: 1px solid var(--border-color);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .history-title {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+        font-size: 1rem;
+        font-weight: 600;
+    }
+
+    .history-title i {
+        color: var(--primary);
+    }
+
+    .history-count {
+        background: var(--bg-elevated);
+        padding: var(--spacing-xs) var(--spacing-md);
+        border-radius: var(--radius-full);
+        font-size: 0.813rem;
+        color: var(--text-secondary);
+    }
+
+    /* History Table */
+    .history-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .history-table th {
+        text-align: left;
+        padding: var(--spacing-md) var(--spacing-lg);
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: var(--text-muted);
+        background: var(--bg-elevated);
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .history-table td {
+        padding: var(--spacing-md) var(--spacing-lg);
+        border-bottom: 1px solid var(--border-color);
+        vertical-align: middle;
+    }
+
+    .history-table tbody tr {
+        transition: background 0.15s ease;
+    }
+
+    .history-table tbody tr:hover {
+        background: var(--bg-elevated);
+    }
+
+    .history-table tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    .history-date {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    .history-date-main {
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: var(--text-primary);
+    }
+
+    .history-date-time {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+    }
+
+    .history-code {
+        font-family: 'SF Mono', 'Monaco', monospace;
+        font-size: 0.813rem;
+        color: var(--text-muted);
+        background: var(--bg-elevated);
+        padding: var(--spacing-xs) var(--spacing-sm);
+        border-radius: var(--radius-sm);
+        display: inline-block;
+    }
+
+    .history-amount {
+        font-size: 1rem;
+        font-weight: 700;
+        color: var(--primary);
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-xs);
+    }
+
+    .history-amount::before {
+        content: '+';
+        font-size: 0.875rem;
+        opacity: 0.8;
+    }
+
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--spacing-xs);
+        padding: var(--spacing-xs) var(--spacing-md);
+        border-radius: var(--radius-full);
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    .status-badge.success {
+        background: rgba(16, 185, 129, 0.15);
+        color: var(--primary);
+    }
+
+    .status-badge.failed {
+        background: rgba(239, 68, 68, 0.15);
+        color: #ef4444;
+    }
+
+    .status-badge i {
+        font-size: 14px;
+    }
+
+    /* Empty State */
+    .empty-state {
+        padding: var(--spacing-3xl);
+        text-align: center;
+    }
+
+    .empty-state-icon {
+        width: 80px;
+        height: 80px;
+        background: var(--bg-elevated);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto var(--spacing-lg);
+    }
+
+    .empty-state-icon i {
+        font-size: 36px;
+        color: var(--text-muted);
+    }
+
+    .empty-state-text {
+        font-size: 1rem;
+        color: var(--text-secondary);
+        margin-bottom: var(--spacing-sm);
+    }
+
+    .empty-state-hint {
+        font-size: 0.875rem;
+        color: var(--text-muted);
+    }
+
+    /* Responsive Table */
+    @media (max-width: 640px) {
+        .history-table {
+            display: block;
+        }
+
+        .history-table thead {
+            display: none;
+        }
+
+        .history-table tbody {
+            display: block;
+        }
+
+        .history-table tr {
+            display: block;
+            padding: var(--spacing-md);
+            margin-bottom: var(--spacing-sm);
+            background: var(--bg-elevated);
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-color);
+        }
+
+        .history-table td {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--spacing-xs) 0;
+            border-bottom: none;
+        }
+
+        .history-table td::before {
+            content: attr(data-label);
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="topup-page">
+    <div class="container">
+        <div class="topup-container">
+            <!-- Balance Card -->
+            <div class="balance-card">
+                <div class="balance-header">
+                    <div class="balance-icon">
+                        <i data-lucide="wallet"></i>
+                    </div>
+                    <div>
+                        <div class="balance-title">ยอดเงินคงเหลือ</div>
+                        <div class="balance-label">Available Balance</div>
+                    </div>
+                </div>
+
+                <div class="balance-amount">
+                    <span class="currency">฿</span>
+                    {{ "{:,.2f}".format(current_user.balance) }}
+                </div>
+
+                <div class="balance-meta">
+                    <div class="balance-stat">
+                        <span class="balance-stat-label">เติมเงินทั้งหมด</span>
+                        <span class="balance-stat-value">{{ topups|length }} ครั้ง</span>
+                    </div>
+                    <div class="balance-stat">
+                        <span class="balance-stat-label">ผู้ใช้</span>
+                        <span class="balance-stat-value">{{ current_user.username }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Topup Form -->
+            <div class="topup-form-card">
+                <div class="topup-form-header">
+                    <div class="topup-form-header-icon">
+                        <i data-lucide="gift"></i>
+                    </div>
+                    <div class="topup-form-header-text">
+                        <h2>เติมเงินด้วยซองอั่งเปา</h2>
+                        <p>TrueMoney Wallet Angpao</p>
+                    </div>
+                </div>
+
+                <div class="topup-form-body">
+                    <form action="{{ url_for('topup_tw') }}" method="POST">
+                        <div class="input-wrapper">
+                            <label for="voucher_link">ลิงค์ซองของขวัญ หรือ รหัสอั่งเปา</label>
+                            <div class="input-with-icon">
+                                <i data-lucide="link" class="input-icon"></i>
+                                <input type="text" id="voucher_link" name="voucher_link"
+                                    placeholder="https://gift.truemoney.com/campaign/?v=... หรือ รหัส 35 ตัว"
+                                    autocomplete="off" required>
+                            </div>
+                            <div class="input-hint">
+                                <i data-lucide="info"></i>
+                                <span>สร้างซองของขวัญผ่านแอป TrueMoney Wallet แล้วนำลิงค์หรือโค้ดมาวางที่นี่</span>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="submit-btn">
+                            <i data-lucide="zap"></i>
+                            ยืนยันการเติมเงิน
+                        </button>
+                    </form>
+
+                    <div class="supported-methods">
+                        <div class="supported-methods-title">รองรับรูปแบบ</div>
+                        <div class="method-tags">
+                            <span class="method-tag">
+                                <i data-lucide="link"></i>
+                                URL Link
+                            </span>
+                            <span class="method-tag">
+                                <i data-lucide="hash"></i>
+                                Voucher Code
+                            </span>
+                            <span class="method-tag">
+                                <i data-lucide="shield-check"></i>
+                                Secure
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- History Section -->
+            <div class="history-section">
+                <div class="history-card">
+                    <div class="history-header">
+                        <div class="history-title">
+                            <i data-lucide="history"></i>
+                            ประวัติการเติมเงิน
+                        </div>
+                        <span class="history-count">{{ topups|length }} รายการ</span>
+                    </div>
+
+                    {% if topups %}
+                    <table class="history-table">
+                        <thead>
+                            <tr>
+                                <th>วันที่</th>
+                                <th>รหัสอ้างอิง</th>
+                                <th>จำนวนเงิน</th>
+                                <th>สถานะ</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for topup in topups %}
+                            <tr>
+                                <td data-label="วันที่">
+                                    <div class="history-date">
+                                        <span class="history-date-main">{{ topup.created_at.strftime('%d/%m/%Y')
+                                            }}</span>
+                                        <span class="history-date-time">{{ topup.created_at.strftime('%H:%M น.')
+                                            }}</span>
+                                    </div>
+                                </td>
+                                <td data-label="รหัส">
+                                    <span class="history-code">{{ topup.reference_code[:12] }}...</span>
+                                </td>
+                                <td data-label="จำนวน">
+                                    <span class="history-amount">฿{{ "{:,.0f}".format(topup.amount) }}</span>
+                                </td>
+                                <td data-label="สถานะ">
+                                    {% if topup.status == 'success' %}
+                                    <span class="status-badge success">
+                                        <i data-lucide="check-circle"></i>
+                                        สำเร็จ
+                                    </span>
+                                    {% else %}
+                                    <span class="status-badge failed">
+                                        <i data-lucide="x-circle"></i>
+                                        {{ topup.status }}
+                                    </span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% else %}
+                    <div class="empty-state">
+                        <div class="empty-state-icon">
+                            <i data-lucide="inbox"></i>
+                        </div>
+                        <p class="empty-state-text">ยังไม่มีประวัติการเติมเงิน</p>
+                        <p class="empty-state-hint">เติมเงินครั้งแรกของคุณเลย!</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

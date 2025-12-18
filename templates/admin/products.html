@@ -1,0 +1,273 @@
+{% extends "base.html" %}
+
+{% block title %}จัดการสินค้า - Line Ranger ID Store{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Admin Products Page */
+    .admin-products-page {
+        padding: var(--spacing-2xl) 0;
+    }
+
+    .table-wrapper {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-xl);
+        overflow: hidden;
+    }
+
+    .product-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .product-table th {
+        background: var(--bg-elevated);
+        padding: var(--spacing-md) var(--spacing-lg);
+        text-align: left;
+        font-weight: 600;
+        color: var(--text-secondary);
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .product-table td {
+        padding: var(--spacing-lg);
+        border-bottom: 1px solid var(--border-color);
+        vertical-align: middle;
+    }
+
+    .product-table tr:last-child td {
+        border-bottom: none;
+    }
+
+    .product-table tr:hover td {
+        background: rgba(255, 255, 255, 0.02);
+    }
+
+    /* Product Cell */
+    .product-cell {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-md);
+    }
+
+    .product-thumb {
+        width: 60px;
+        height: 60px;
+        border-radius: var(--radius-lg);
+        overflow: hidden;
+        background: var(--bg-elevated);
+        flex-shrink: 0;
+    }
+
+    .product-thumb img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .product-thumb-placeholder {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--text-muted);
+    }
+
+    .product-info h4 {
+        font-weight: 600;
+        margin-bottom: 4px;
+        color: var(--text-primary);
+    }
+
+    .product-info p {
+        font-size: 0.813rem;
+        color: var(--text-secondary);
+    }
+
+    /* Status Badge */
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 12px;
+        border-radius: 50px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    .status-badge.available {
+        background: rgba(16, 185, 129, 0.1);
+        color: #10b981;
+    }
+
+    .status-badge.sold {
+        background: rgba(239, 68, 68, 0.1);
+        color: #ef4444;
+    }
+
+    .status-indicator {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: currentColor;
+    }
+
+    /* Actions */
+    .action-buttons {
+        display: flex;
+        gap: 8px;
+    }
+
+    .btn-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: var(--radius-md);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid var(--border-color);
+        background: var(--bg-elevated);
+        color: var(--text-secondary);
+        transition: all 0.2s ease;
+    }
+
+    .btn-icon:hover {
+        background: var(--bg-hover);
+        color: var(--text-primary);
+        border-color: var(--border-light);
+    }
+
+    .btn-icon.delete:hover {
+        background: rgba(239, 68, 68, 0.1);
+        color: #ef4444;
+        border-color: rgba(239, 68, 68, 0.3);
+    }
+
+    .price-tag {
+        font-family: monospace;
+        font-weight: 600;
+        color: var(--primary);
+    }
+
+    .xml-tag {
+        font-family: monospace;
+        font-size: 0.813rem;
+        background: var(--bg-elevated);
+        padding: 4px 8px;
+        border-radius: 4px;
+        color: var(--text-muted);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="admin-products-page">
+    <div class="container">
+        <div class="page-header"
+            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+            <div>
+                <h1><i data-lucide="package"></i> จัดการสินค้า</h1>
+                <p style="color: var(--text-secondary);">คลังสินค้าทั้งหมด ({{ products|length }} รายการ)</p>
+            </div>
+            <a href="{{ url_for('add_product') }}" class="btn btn-primary">
+                <i data-lucide="plus"></i>
+                เพิ่มสินค้าใหม่
+            </a>
+        </div>
+
+        {% if products %}
+        <div class="table-wrapper">
+            <div style="overflow-x: auto;">
+                <table class="product-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 80px;">ID</th>
+                            <th>สินค้า</th>
+                            <th>ไฟล์ข้อมูล</th>
+                            <th>ราคา</th>
+                            <th>สถานะ</th>
+                            <th>จัดการ</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for product in products %}
+                        <tr>
+                            <td style="font-family: monospace; color: var(--text-muted);">#{{ product.id }}</td>
+                            <td>
+                                <div class="product-cell">
+                                    <div class="product-thumb">
+                                        {% if product.image_path %}
+                                        <img src="{{ url_for('static', filename='images/' + product.image_path) }}"
+                                            alt="Img">
+                                        {% else %}
+                                        <div class="product-thumb-placeholder">
+                                            <i data-lucide="image"></i>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="product-info">
+                                        <h4>{{ product.name }}</h4>
+                                        <p>{{ product.description[:50] }}...</p>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="xml-tag">
+                                    <i data-lucide="file-code"
+                                        style="width: 12px; height: 12px; display: inline-block; vertical-align: middle;"></i>
+                                    {{ product.xml_file }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="price-tag">฿{{ "{:,.2f}".format(product.price) }}</span>
+                            </td>
+                            <td>
+                                {% if product.is_sold %}
+                                <div class="status-badge sold">
+                                    <div class="status-indicator"></div>
+                                    ขายแล้ว
+                                </div>
+                                {% else %}
+                                <div class="status-badge available">
+                                    <div class="status-indicator"></div>
+                                    พร้อมขาย
+                                </div>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="action-buttons">
+                                    <a href="{{ url_for('edit_product', id=product.id) }}" class="btn-icon"
+                                        title="แก้ไข">
+                                        <i data-lucide="edit-2" style="width: 16px;"></i>
+                                    </a>
+                                    <button onclick="confirmDelete({{ product.id }}, '{{ product.name }}')"
+                                        class="btn-icon delete" title="ลบ">
+                                        <i data-lucide="trash-2" style="width: 16px;"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% else %}
+        <div class="empty-state"
+            style="text-align: center; padding: 60px; background: var(--bg-card); border-radius: var(--radius-xl); border: 1px solid var(--border-color);">
+            <div
+                style="width: 80px; height: 80px; background: var(--bg-elevated); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;">
+                <i data-lucide="package-open" style="width: 40px; height: 40px; color: var(--text-muted);"></i>
+            </div>
+            <h3>ยังไม่มีสินค้าในคลัง</h3>
+            <p style="color: var(--text-secondary); margin-bottom: 20px;">เริ่มลงขายสินค้าชิ้นแรกของคุณเลย</p>
+            <a href="{{ url_for('add_product') }}" class="btn btn-primary">
+                <i data-lucide="plus"></i> เพิ่มสินค้าใหม่
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

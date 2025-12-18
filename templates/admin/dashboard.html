@@ -1,0 +1,305 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard - Line Ranger ID Store{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Admin Dashboard Styles */
+    .admin-page {
+        padding: var(--spacing-2xl) 0;
+    }
+
+    .dashboard-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: var(--spacing-lg);
+        margin-bottom: var(--spacing-2xl);
+    }
+
+    @media (max-width: 1100px) {
+        .dashboard-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+
+    @media (max-width: 600px) {
+        .dashboard-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    /* Stat Card */
+    .stat-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-xl);
+        padding: var(--spacing-lg);
+        display: flex;
+        flex-direction: column;
+        position: relative;
+        overflow: hidden;
+        transition: all 0.2s ease;
+        text-decoration: none;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-4px);
+        border-color: var(--primary);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    }
+
+    .stat-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: var(--spacing-md);
+    }
+
+    .stat-label {
+        color: var(--text-secondary);
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
+
+    .stat-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: var(--radius-lg);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .stat-icon i {
+        font-size: 20px;
+    }
+
+    .stat-value {
+        font-size: 2rem;
+        font-weight: 700;
+        color: white;
+    }
+
+    /* Stat Variants */
+    .stat-card.blue .stat-icon {
+        background: rgba(59, 130, 246, 0.1);
+        color: #3b82f6;
+    }
+
+    .stat-card.blue:hover {
+        border-color: #3b82f6;
+    }
+
+    .stat-card.orange .stat-icon {
+        background: rgba(245, 158, 11, 0.1);
+        color: #f59e0b;
+    }
+
+    .stat-card.orange:hover {
+        border-color: #f59e0b;
+    }
+
+    .stat-card.green .stat-icon {
+        background: rgba(16, 185, 129, 0.1);
+        color: #10b981;
+    }
+
+    .stat-card.green:hover {
+        border-color: #10b981;
+    }
+
+    .stat-card.purple .stat-icon {
+        background: rgba(139, 92, 246, 0.1);
+        color: #8b5cf6;
+    }
+
+    .stat-card.purple:hover {
+        border-color: #8b5cf6;
+    }
+
+    /* Sections */
+    .section-title {
+        font-size: 1.25rem;
+        font-weight: 700;
+        margin-bottom: var(--spacing-lg);
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+    }
+
+    .section-title i {
+        color: var(--primary);
+    }
+
+    /* Action Cards */
+    .action-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: var(--spacing-lg);
+    }
+
+    .action-card {
+        background: var(--bg-elevated);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-xl);
+        padding: var(--spacing-xl);
+        text-align: center;
+        text-decoration: none;
+        transition: all 0.2s ease;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 200px;
+    }
+
+    .action-card:hover {
+        background: var(--bg-card);
+        border-color: var(--primary);
+        transform: translateY(-4px);
+    }
+
+    .action-icon {
+        width: 64px;
+        height: 64px;
+        background: var(--bg-dark);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: var(--spacing-md);
+        transition: all 0.2s ease;
+    }
+
+    .action-card:hover .action-icon {
+        background: var(--primary);
+        color: white;
+    }
+
+    .action-icon i {
+        font-size: 28px;
+        color: var(--text-secondary);
+    }
+
+    .action-card:hover .action-icon i {
+        color: white;
+    }
+
+    .action-card h3 {
+        font-size: 1.125rem;
+        font-weight: 600;
+        margin-bottom: var(--spacing-xs);
+        color: var(--text-primary);
+    }
+
+    .action-card p {
+        color: var(--text-secondary);
+        font-size: 0.875rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="admin-page">
+    <div class="container">
+        <div class="page-header"
+            style="text-align: left; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: end;">
+            <div>
+                <h1 style="font-size: 2rem; margin-bottom: 8px;">แผงควบคุมระบบ</h1>
+                <p style="color: var(--text-secondary);">ภาพรวมของร้านค้าและรายการสั่งซื้อล่าสุด</p>
+            </div>
+            <div style="text-align: right;">
+                <div style="font-size: 0.875rem; color: var(--text-muted);">วันนี้</div>
+                <div style="font-size: 1.125rem; font-weight: 600;">{{ pending_count }} รายการใหม่</div>
+            </div>
+        </div>
+
+        <!-- Dashboard Stats -->
+        <div class="dashboard-grid">
+            <a href="{{ url_for('admin_orders', status='pending') }}" class="stat-card orange">
+                <div class="stat-header">
+                    <span class="stat-label">รอดำเนินการ</span>
+                    <div class="stat-icon">
+                        <i data-lucide="clock"></i>
+                    </div>
+                </div>
+                <div class="stat-value">{{ pending_count }}</div>
+                <div style="font-size: 0.75rem; color: #f59e0b; margin-top: 8px;">ต้องจัดการทันที</div>
+            </a>
+
+            <a href="{{ url_for('admin_orders', status='processing') }}" class="stat-card blue">
+                <div class="stat-header">
+                    <span class="stat-label">กำลังดำเนินการ</span>
+                    <div class="stat-icon">
+                        <i data-lucide="loader"></i>
+                    </div>
+                </div>
+                <div class="stat-value">{{ processing_count }}</div>
+                <div style="font-size: 0.75rem; color: #3b82f6; margin-top: 8px;">กำลังทำงาน</div>
+            </a>
+
+            <a href="{{ url_for('admin_orders', status='done') }}" class="stat-card green">
+                <div class="stat-header">
+                    <span class="stat-label">เสร็จสิ้นทั้งหมด</span>
+                    <div class="stat-icon">
+                        <i data-lucide="check-circle"></i>
+                    </div>
+                </div>
+                <div class="stat-value">{{ done_count }}</div>
+                <div style="font-size: 0.75rem; color: #10b981; margin-top: 8px;">ยอดขายสำเร็จ</div>
+            </a>
+
+            <a href="{{ url_for('admin_products') }}" class="stat-card purple">
+                <div class="stat-header">
+                    <span class="stat-label">สินค้าทั้งหมด</span>
+                    <div class="stat-icon">
+                        <i data-lucide="package"></i>
+                    </div>
+                </div>
+                <div class="stat-value">{{ product_count }}</div>
+                <div style="font-size: 0.75rem; color: #8b5cf6; margin-top: 8px;">พร้อมขาย</div>
+            </a>
+        </div>
+
+        <!-- Quick Actions -->
+        <h2 class="section-title">
+            <i data-lucide="zap"></i>
+            เมนูด่วน
+        </h2>
+
+        <div class="action-grid">
+            <a href="{{ url_for('admin_orders', status='pending') }}" class="action-card">
+                <div class="action-icon">
+                    <i data-lucide="clipboard-list"></i>
+                </div>
+                <h3>จัดการออเดอร์</h3>
+                <p>ตรวจสอบและอนุมัติการสั่งซื้อ</p>
+            </a>
+
+            <a href="{{ url_for('add_product') }}" class="action-card">
+                <div class="action-icon">
+                    <i data-lucide="plus"></i>
+                </div>
+                <h3>เพิ่มสินค้าใหม่</h3>
+                <p>ลงขายไอดี Line Ranger ใหม่</p>
+            </a>
+
+            <a href="{{ url_for('admin_products') }}" class="action-card">
+                <div class="action-icon">
+                    <i data-lucide="settings-2"></i>
+                </div>
+                <h3>จัดการสินค้า</h3>
+                <p>แก้ไขราคา หรือลบสินค้า</p>
+            </a>
+
+            <a href="{{ url_for('products') }}" class="action-card">
+                <div class="action-icon">
+                    <i data-lucide="eye"></i>
+                </div>
+                <h3>ดูหน้าร้านค้า</h3>
+                <p>ตรวจสอบหน้าเว็บจริง</p>
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

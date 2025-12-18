@@ -1,0 +1,534 @@
+{% extends "base.html" %}
+
+{% block title %}จัดการออเดอร์ - Line Ranger ID Store{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Admin Order Styles */
+    .orders-page {
+        padding: var(--spacing-2xl) 0;
+    }
+
+    .page-actions {
+        display: flex;
+        gap: var(--spacing-sm);
+        margin-bottom: var(--spacing-xl);
+        overflow-x: auto;
+        padding-bottom: 4px;
+    }
+
+    .status-tab {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+        padding: var(--spacing-md) var(--spacing-lg);
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-lg);
+        color: var(--text-secondary);
+        text-decoration: none;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        white-space: nowrap;
+    }
+
+    .status-tab:hover {
+        border-color: var(--border-light);
+        color: var(--text-primary);
+    }
+
+    .status-tab.active {
+        background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(16, 185, 129, 0.05));
+        border-color: var(--primary);
+        color: var(--primary);
+    }
+
+    .status-tab.active i {
+        color: var(--primary);
+    }
+
+    /* Order Card & Grid */
+    .orders-grid {
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-lg);
+    }
+
+    .order-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-xl);
+        overflow: hidden;
+        transition: all 0.2s ease;
+    }
+
+    .order-card:hover {
+        border-color: var(--primary);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    }
+
+    .order-header {
+        padding: var(--spacing-lg);
+        background: var(--bg-elevated);
+        border-bottom: 1px solid var(--border-color);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: var(--spacing-md);
+    }
+
+    .order-id {
+        font-family: monospace;
+        font-weight: 700;
+        font-size: 1.125rem;
+        color: var(--text-primary);
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+    }
+
+    .order-date {
+        font-size: 0.875rem;
+        color: var(--text-muted);
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .order-badge {
+        padding: 4px 12px;
+        border-radius: 50px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .badge-pending {
+        background: rgba(245, 158, 11, 0.1);
+        color: #f59e0b;
+        border: 1px solid rgba(245, 158, 11, 0.2);
+    }
+
+    .badge-processing {
+        background: rgba(59, 130, 246, 0.1);
+        color: #3b82f6;
+        border: 1px solid rgba(59, 130, 246, 0.2);
+    }
+
+    .badge-done {
+        background: rgba(16, 185, 129, 0.1);
+        color: #10b981;
+        border: 1px solid rgba(16, 185, 129, 0.2);
+    }
+
+    .order-body {
+        padding: var(--spacing-lg);
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: var(--spacing-xl);
+    }
+
+    @media (max-width: 900px) {
+        .order-body {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .info-group h4 {
+        font-size: 0.813rem;
+        text-transform: uppercase;
+        color: var(--text-muted);
+        letter-spacing: 1px;
+        margin-bottom: var(--spacing-md);
+    }
+
+    .customer-info,
+    .product-info {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-md);
+        margin-bottom: var(--spacing-md);
+    }
+
+    .info-avatar {
+        width: 48px;
+        height: 48px;
+        background: var(--bg-dark);
+        border-radius: var(--radius-lg);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--text-secondary);
+    }
+
+    .info-details h5 {
+        font-size: 1rem;
+        font-weight: 600;
+        margin-bottom: 2px;
+    }
+
+    .info-details p {
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+    }
+
+    /* Link Actions Panel */
+    .link-panel {
+        background: rgba(16, 185, 129, 0.05);
+        border: 1px solid rgba(16, 185, 129, 0.2);
+        border-radius: var(--radius-lg);
+        padding: var(--spacing-lg);
+        margin-top: var(--spacing-lg);
+    }
+
+    .link-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: var(--spacing-md);
+    }
+
+    .link-details {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: var(--spacing-md);
+        margin-bottom: var(--spacing-lg);
+    }
+
+    .credential-box {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-md);
+        padding: var(--spacing-md);
+        position: relative;
+    }
+
+    .credential-label {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        margin-bottom: 4px;
+    }
+
+    .credential-value {
+        font-family: monospace;
+        font-size: 0.938rem;
+        color: var(--text-primary);
+        word-break: break-all;
+    }
+
+    .copy-btn {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        background: none;
+        border: none;
+        color: var(--text-muted);
+        cursor: pointer;
+        transition: color 0.2s;
+    }
+
+    .copy-btn:hover {
+        color: var(--primary);
+    }
+
+    .action-bar {
+        display: flex;
+        gap: var(--spacing-md);
+        flex-wrap: wrap;
+        margin-top: var(--spacing-lg);
+        padding-top: var(--spacing-lg);
+        border-top: 1px solid var(--border-color);
+    }
+
+    .btn-action {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+        padding: var(--spacing-md) var(--spacing-lg);
+        border-radius: var(--radius-lg);
+        font-weight: 600;
+        font-size: 0.938rem;
+        cursor: pointer;
+        border: none;
+        transition: all 0.2s ease;
+    }
+
+    .btn-link {
+        background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+        color: white;
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+    }
+
+    .btn-link:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(16, 185, 129, 0.4);
+    }
+
+    .btn-status {
+        background: var(--bg-elevated);
+        border: 1px solid var(--border-color);
+        color: var(--text-secondary);
+    }
+
+    .btn-status:hover {
+        background: var(--bg-hover);
+        border-color: var(--border-light);
+        color: var(--text-primary);
+    }
+
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        background: var(--bg-card);
+        border-radius: var(--radius-xl);
+        border: 1px solid var(--border-color);
+    }
+
+    .empty-icon {
+        width: 80px;
+        height: 80px;
+        background: var(--bg-elevated);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto var(--spacing-lg);
+        color: var(--text-muted);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="orders-page">
+    <div class="container">
+        <div class="page-header">
+            <h1><i data-lucide="clipboard-list"></i> จัดการออเดอร์</h1>
+            <p>ตรวจสอบและดำเนินการ Link ID ให้ลูกค้า</p>
+        </div>
+
+        <!-- Status Tabs -->
+        <div class="page-actions">
+            <a href="{{ url_for('admin_orders', status='pending') }}"
+                class="status-tab {% if current_status == 'pending' %}active{% endif %}">
+                <i data-lucide="clock"></i>
+                รอดำเนินการ
+            </a>
+            <a href="{{ url_for('admin_orders', status='processing') }}"
+                class="status-tab {% if current_status == 'processing' %}active{% endif %}">
+                <i data-lucide="loader"></i>
+                กำลังดำเนินการ
+            </a>
+            <a href="{{ url_for('admin_orders', status='done') }}"
+                class="status-tab {% if current_status == 'done' %}active{% endif %}">
+                <i data-lucide="check-circle"></i>
+                เสร็จสิ้น
+            </a>
+        </div>
+
+        {% if orders %}
+        <div class="orders-grid">
+            {% for order in orders %}
+            <div class="order-card" id="order-{{ order.id }}">
+                <div class="order-header">
+                    <div class="order-id">
+                        <i data-lucide="hash"></i>{{ order.id }}
+                    </div>
+                    <div class="order-date">
+                        <i data-lucide="calendar"></i>
+                        {{ order.created_at.strftime('%d/%m/%Y %H:%M') }}
+                    </div>
+                    {% if order.status == 'pending' %}
+                    <span class="order-badge badge-pending">รอดำเนินการ</span>
+                    {% elif order.status == 'processing' %}
+                    <span class="order-badge badge-processing">กำลังดำเนินการ</span>
+                    {% else %}
+                    <span class="order-badge badge-done">เสร็จสิ้น</span>
+                    {% endif %}
+                </div>
+
+                <div class="order-body">
+                    <!-- Customer & Product Info -->
+                    <div class="info-group">
+                        <h4>ข้อมูลคำสั่งซื้อ</h4>
+                        <div class="customer-info">
+                            <div class="info-avatar">
+                                <i data-lucide="user"></i>
+                            </div>
+                            <div class="info-details">
+                                <h5>{{ order.user.username }}</h5>
+                                <p>ผู้สั่งซื้อ</p>
+                            </div>
+                        </div>
+                        <div class="product-info">
+                            <div class="info-avatar">
+                                <i data-lucide="package"></i>
+                            </div>
+                            <div class="info-details">
+                                <h5>{{ order.product.name }}</h5>
+                                <p>฿{{ "{:,.2f}".format(order.product.price) }}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Link Actions -->
+                    <div class="info-group">
+                        <h4>การดำเนินการ</h4>
+
+                        {% if order.customer_id and order.customer_pass %}
+                        <div class="link-panel">
+                            <div class="link-header">
+                                <div style="font-weight: 600; display: flex; align-items: center; gap: 8px;">
+                                    {% if order.link_method == 'google' %}
+                                    <i data-lucide="mail" style="color: #ea4335;"></i> Google Login
+                                    {% else %}
+                                    <i data-lucide="message-circle" style="color: #00b900;"></i> LINE Login
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="link-details">
+                                <div class="credential-box">
+                                    <div class="credential-label">ID / Email</div>
+                                    <div class="credential-value">{{ order.customer_id }}</div>
+                                    <button class="copy-btn" onclick="copyToClipboard('{{ order.customer_id }}')">
+                                        <i data-lucide="copy" style="width: 14px;"></i>
+                                    </button>
+                                </div>
+                                <div class="credential-box">
+                                    <div class="credential-label">Password</div>
+                                    <div class="credential-value" id="pass-val-{{ order.id }}">••••••••</div>
+                                    <button class="copy-btn" style="right: 32px;"
+                                        onclick="togglePassword('pass-val-{{ order.id }}', '{{ order.customer_pass }}')">
+                                        <i data-lucide="eye" style="width: 14px;"></i>
+                                    </button>
+                                    <button class="copy-btn" onclick="copyToClipboard('{{ order.customer_pass }}')">
+                                        <i data-lucide="copy" style="width: 14px;"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="action-bar">
+                                {% if order.status != 'done' %}
+                                <button class="btn-action btn-link" onclick="linkId({{ order.id }})">
+                                    <i data-lucide="zap"></i>
+                                    Auto Link ID
+                                </button>
+                                {% endif %}
+
+                                {% if order.status == 'pending' %}
+                                <button class="btn-action btn-status"
+                                    onclick="updateOrderStatus({{ order.id }}, 'processing')">
+                                    <i data-lucide="arrow-right"></i>
+                                    ปรับเป็นกำลังทำ
+                                </button>
+                                {% endif %}
+
+                                {% if order.status == 'processing' %}
+                                <button class="btn-action btn-status"
+                                    style="background: rgba(16, 185, 129, 0.1); color: var(--primary); border-color: var(--primary);"
+                                    onclick="updateOrderStatus({{ order.id }}, 'done')">
+                                    <i data-lucide="check"></i>
+                                    เสร็จสิ้นงาน
+                                </button>
+                                {% endif %}
+
+                                {% if order.status == 'done' %}
+                                <button class="btn-action btn-status"
+                                    onclick="updateOrderStatus({{ order.id }}, 'pending')">
+                                    <i data-lucide="rotate-ccw"></i>
+                                    Re-Open
+                                </button>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% else %}
+                        <div class="empty-state" style="padding: 20px; background: var(--bg-elevated); border: none;">
+                            <i data-lucide="clock"
+                                style="width: 32px; height: 32px; margin-bottom: 10px; opacity: 0.5;"></i>
+                            <p style="font-size: 0.875rem;">รอลูกค้ากรอกข้อมูล Link ID</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-icon">
+                <i data-lucide="inbox"></i>
+            </div>
+            <h3>ไม่มีออเดอร์ในสถานะนี้</h3>
+            <p>เลือกแท็บสถานะอื่นหรือรอออเดอร์ใหม่</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+    function togglePassword(elementId, password) {
+        const element = document.getElementById(elementId);
+        if (element.textContent === '••••••••') {
+            element.textContent = password;
+        } else {
+            element.textContent = '••••••••';
+        }
+    }
+
+    async function linkId(orderId) {
+        if (!confirm('ต้องการรัน Automation Script เพื่อ Link ID ใช่หรือไม่?')) return;
+
+        const btn = event.currentTarget;
+        const originalContent = btn.innerHTML;
+        btn.innerHTML = '<i data-lucide="loader" class="spin"></i> กำลังทำงาน...';
+        btn.disabled = true;
+        lucide.createIcons();
+
+        try {
+            const response = await fetch(`/admin/order/${orderId}/link`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            const data = await response.json();
+
+            if (data.success) {
+                let msg = data.message;
+                if (data.verification_code) {
+                    alert(`✅ เสร็จสิ้น!\n\n🔑 2FA Code: ${data.verification_code}\n\nแจ้งลูกค้าได้เลย`);
+                } else {
+                    alert('✅ ' + msg);
+                }
+                location.reload();
+            } else {
+                alert('❌ Error: ' + data.message);
+            }
+        } catch (error) {
+            console.error(error);
+            alert('❌ Connection Error');
+        } finally {
+            btn.innerHTML = originalContent;
+            btn.disabled = false;
+            lucide.createIcons();
+        }
+    }
+
+    async function updateOrderStatus(orderId, status) {
+        if (!confirm('ยืนยันเปลี่ยนสถานะ?')) return;
+        try {
+            const response = await fetch(`/admin/order/${orderId}/status`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: status })
+            });
+            if (response.ok) location.reload();
+            else alert('Failed to update status');
+        } catch (e) {
+            console.error(e);
+            alert('Error updating status');
+        }
+    }
+</script>
+{% endblock %}

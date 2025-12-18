@@ -1,0 +1,712 @@
+{% extends "base.html" %}
+
+{% block title %}แก้ไขสินค้า - Line Ranger ID Store{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="edit-page-container">
+        <div class="edit-header">
+            <h2>แก้ไขสินค้า</h2>
+            <p>จัดการข้อมูลและสต็อกสินค้า</p>
+        </div>
+
+        <form method="POST" action="{{ url_for('edit_product', id=product.id) }}" enctype="multipart/form-data">
+            <div class="form-grid">
+                <!-- Product Name -->
+                <div class="form-group span-2">
+                    <label class="form-label" for="name">ชื่อสินค้า</label>
+                    <div class="input-group">
+                        <i data-lucide="package"></i>
+                        <input type="text" id="name" name="name" class="form-control" value="{{ product.name }}"
+                            required placeholder="ระบุชื่อสินค้า">
+                    </div>
+                </div>
+
+                <!-- Price -->
+                <div class="form-group">
+                    <label class="form-label" for="price">ราคา (บาท)</label>
+                    <div class="input-group">
+                        <span class="currency-symbol">฿</span>
+                        <input type="number" id="price" name="price" class="form-control" value="{{ product.price }}"
+                            step="0.01" min="0" required placeholder="0.00">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Description -->
+            <div class="form-group">
+                <label class="form-label" for="description">รายละเอียด</label>
+                <div class="input-group">
+                    <textarea id="description" name="description" class="form-control" rows="4"
+                        placeholder="รายละเอียดสินค้า...">{{ product.description or '' }}</textarea>
+                </div>
+            </div>
+
+            <!-- Image Upload -->
+            <div class="form-group">
+                <label class="form-label">รูปภาพสินค้า</label>
+                <div class="image-upload-sections">
+                    {% if product.image_path %}
+                    <div class="current-image">
+                        <img src="{{ url_for('static', filename='images/' + product.image_path) }}"
+                            alt="{{ product.name }}">
+                        <span class="image-label">รูปปัจจุบัน</span>
+                    </div>
+                    {% endif %}
+
+                    <div class="new-image-upload">
+                        <input type="file" id="image" name="image" class="hidden-input" accept="image/*"
+                            onchange="previewImage(this, 'editImagePreview')">
+                        <label for="image" class="upload-zone">
+                            <i data-lucide="image-plus"></i>
+                            <span class="upload-text">คลิกเพื่ออัพโหลดรูปใหม่</span>
+                            <span class="upload-hint">(PNG, JPG, GIF)</span>
+                        </label>
+                        <img id="editImagePreview" class="image-preview">
+                    </div>
+                </div>
+            </div>
+
+            <div class="divider"></div>
+
+            <!-- Stock Management Section -->
+            <div class="stock-section">
+                <div class="section-header">
+                    <h3>
+                        <i data-lucide="layers"></i>
+                        จัดการสต็อก
+                    </h3>
+                    <span class="stock-count-badge">
+                        คงเหลือ {{ product.stock_count }} ชิ้น
+                    </span>
+                </div>
+
+                <!-- Existing Stock List -->
+                <div class="stock-list-container">
+                    {% if product.stocks %}
+                    <div class="stock-items">
+                        {% for stock in product.stocks %}
+                        <div class="stock-item" id="stock-{{ stock.id }}">
+                            <div class="item-info">
+                                <div class="status-dot {{ 'sold' if stock.is_sold else 'active' }}"></div>
+                                <span class="file-name {{ 'sold' if stock.is_sold }}">
+                                    {{ stock.xml_file }}
+                                </span>
+                                {% if stock.is_sold %}
+                                <span class="sold-badge">SOLD</span>
+                                {% endif %}
+                            </div>
+
+                            {% if not stock.is_sold %}
+                            <button type="button" onclick="deleteStock({{ stock.id }})" class="delete-btn">
+                                <i data-lucide="trash-2"></i>
+                            </button>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="empty-stock">
+                        <i data-lucide="package-open"></i>
+                        <p>สินค้าหมดสต็อก</p>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Add New Stock -->
+                <div class="add-stock-zone">
+                    <label class="form-label">เพิ่มสต็อกสินค้า (XML)</label>
+                    <div class="file-upload-box">
+                        <input type="file" id="xml_files" name="xml_files[]" accept=".xml" multiple
+                            onchange="handleFilesSelect(this)">
+                        <div class="upload-content">
+                            <div class="icon-circle">
+                                <i data-lucide="file-plus"></i>
+                            </div>
+                            <p class="upload-title">คลิก หรือ ลากไฟล์ XML มาวางที่นี่</p>
+                            <p class="upload-subtitle">รองรับการอัพโหลดทีละหลายไฟล์</p>
+                        </div>
+                    </div>
+                    <!-- Preview Area -->
+                    <div id="fileListPreview" class="file-preview-list"></div>
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <a href="{{ url_for('admin_products') }}" class="btn-cancel">
+                    ยกเลิก
+                </a>
+                <button type="submit" class="btn-submit">
+                    <i data-lucide="save"></i>
+                    บันทึกการเปลี่ยนแปลง
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function previewImage(input, previewId) {
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                const preview = document.getElementById(previewId);
+                preview.src = e.target.result;
+                preview.style.display = 'block';
+            }
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    function deleteStock(id) {
+        if (!confirm('ยืนยันที่จะลบรายการสต็อกนี้?')) return;
+
+        fetch(`/admin/stock/delete/${id}`, {
+            method: 'POST',
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const el = document.getElementById(`stock-${id}`);
+                    el.style.opacity = '0';
+                    setTimeout(() => el.remove(), 300);
+                } else {
+                    alert(data.message || 'เกิดข้อผิดพลาดในการลบ');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('เกิดข้อผิดพลาดในการเชื่อมต่อ');
+            });
+    }
+
+    function handleFilesSelect(input) {
+        const preview = document.getElementById('fileListPreview');
+        preview.innerHTML = '';
+
+        if (input.files && input.files.length > 0) {
+            const container = document.createElement('div');
+            container.className = 'preview-container';
+
+            const header = document.createElement('div');
+            header.className = 'preview-header';
+            header.innerHTML = `
+                <span class="success-text">พร้อมอัพโหลด ${input.files.length} ไฟล์</span>
+                <span class="size-text">รวม ${(Array.from(input.files).reduce((a, b) => a + b.size, 0) / 1024).toFixed(1)} KB</span>
+            `;
+            container.appendChild(header);
+
+            const grid = document.createElement('div');
+            grid.className = 'preview-grid';
+
+            Array.from(input.files).forEach(file => {
+                const badge = document.createElement('div');
+                badge.className = 'file-badge';
+                badge.innerHTML = `<i data-lucide="file-code"></i> <span>${file.name}</span>`;
+                grid.appendChild(badge);
+            });
+
+            container.appendChild(grid);
+            preview.appendChild(container);
+            lucide.createIcons();
+        }
+    }
+</script>
+
+<style>
+    /* Theme Integrated Styles */
+    .edit-page-container {
+        max-width: 1000px;
+        margin: var(--spacing-3xl) auto;
+        padding: var(--spacing-xl);
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-xl);
+        box-shadow: var(--shadow-xl);
+    }
+
+    .edit-header {
+        margin-bottom: var(--spacing-xl);
+        padding-bottom: var(--spacing-md);
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .edit-header h2 {
+        font-size: 2rem;
+        font-weight: 800;
+        color: var(--text-primary);
+        margin-bottom: var(--spacing-xs);
+    }
+
+    .edit-header p {
+        color: var(--text-secondary);
+    }
+
+    .form-grid {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: var(--spacing-lg);
+        margin-bottom: var(--spacing-lg);
+    }
+
+    .span-2 {
+        grid-column: span 1;
+        /* Changed from span 2 to allow side-by-side */
+    }
+
+    @media (max-width: 768px) {
+        .form-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .form-group {
+        margin-bottom: var(--spacing-lg);
+    }
+
+    .form-label {
+        display: block;
+        color: var(--text-primary);
+        font-weight: 500;
+        margin-bottom: var(--spacing-sm);
+    }
+
+    .input-group {
+        background: var(--bg-elevated);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-md);
+        padding: 4px var(--spacing-md);
+        display: flex;
+        align-items: center;
+        transition: var(--transition-fast);
+    }
+
+    .input-group:focus-within {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.1);
+    }
+
+    .input-group i,
+    .currency-symbol {
+        color: var(--text-muted);
+        width: 20px;
+        flex-shrink: 0;
+    }
+
+    .currency-symbol {
+        color: var(--primary);
+        font-weight: 700;
+        margin-right: var(--spacing-sm);
+    }
+
+    .form-control {
+        background: transparent;
+        border: none;
+        color: var(--text-primary);
+        padding: 12px;
+        width: 100%;
+        outline: none;
+        font-size: 0.95rem;
+    }
+
+    textarea.form-control {
+        resize: vertical;
+        padding-left: 0;
+    }
+
+    /* Image Upload Styles */
+    .image-upload-sections {
+        display: flex;
+        gap: var(--spacing-lg);
+        align-items: start;
+    }
+
+    .current-image {
+        position: relative;
+        text-align: center;
+    }
+
+    .current-image img {
+        width: 120px;
+        height: 120px;
+        object-fit: cover;
+        border-radius: var(--radius-md);
+        border: 2px solid var(--border-color);
+    }
+
+    .image-label {
+        display: block;
+        margin-top: var(--spacing-xs);
+        font-size: 0.75rem;
+        color: var(--text-muted);
+    }
+
+    .new-image-upload {
+        flex: 1;
+    }
+
+    .hidden-input {
+        display: none;
+    }
+
+    .upload-zone {
+        cursor: pointer;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 30px;
+        border: 2px dashed var(--border-color);
+        border-radius: var(--radius-lg);
+        background: var(--bg-elevated);
+        transition: var(--transition-fast);
+    }
+
+    .upload-zone:hover {
+        border-color: var(--primary);
+        background: rgba(16, 185, 129, 0.05);
+    }
+
+    .upload-zone i {
+        width: 32px;
+        height: 32px;
+        color: var(--text-muted);
+        margin-bottom: var(--spacing-sm);
+    }
+
+    .upload-text {
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+        font-weight: 500;
+    }
+
+    .upload-hint {
+        color: var(--text-muted);
+        font-size: 0.8rem;
+    }
+
+    .image-preview {
+        display: none;
+        width: 100%;
+        height: 200px;
+        object-fit: cover;
+        border-radius: var(--radius-md);
+        margin-top: var(--spacing-md);
+        border: 1px solid var(--border-color);
+    }
+
+    .divider {
+        height: 1px;
+        background: var(--border-color);
+        margin: var(--spacing-xl) 0;
+    }
+
+    /* Stock Management */
+    .stock-section {
+        margin-top: var(--spacing-lg);
+    }
+
+    .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: var(--spacing-md);
+    }
+
+    .section-header h3 {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+    }
+
+    .section-header h3 i {
+        color: var(--primary);
+    }
+
+    .stock-count-badge {
+        background: rgba(16, 185, 129, 0.1);
+        color: var(--primary);
+        padding: 4px 12px;
+        border-radius: var(--radius-full);
+        font-size: 0.875rem;
+        border: 1px solid rgba(16, 185, 129, 0.2);
+    }
+
+    .stock-list-container {
+        background: var(--bg-elevated);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-lg);
+        overflow: hidden;
+        margin-bottom: var(--spacing-lg);
+    }
+
+    .stock-items {
+        max-height: 250px;
+        overflow-y: auto;
+    }
+
+    .stock-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px 20px;
+        border-bottom: 1px solid var(--border-color);
+        transition: var(--transition-fast);
+    }
+
+    .stock-item:last-child {
+        border-bottom: none;
+    }
+
+    .stock-item:hover {
+        background: var(--bg-hover);
+    }
+
+    .item-info {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-md);
+    }
+
+    .status-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+    }
+
+    .status-dot.active {
+        background: var(--primary);
+        box-shadow: 0 0 8px rgba(16, 185, 129, 0.4);
+    }
+
+    .status-dot.sold {
+        background: var(--status-error);
+        box-shadow: 0 0 8px rgba(239, 68, 68, 0.4);
+    }
+
+    .file-name {
+        color: var(--text-primary);
+        font-family: monospace;
+        font-size: 0.9rem;
+    }
+
+    .file-name.sold {
+        color: var(--text-muted);
+        text-decoration: line-through;
+    }
+
+    .sold-badge {
+        font-size: 0.7rem;
+        background: rgba(239, 68, 68, 0.1);
+        color: var(--status-error);
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-weight: 600;
+    }
+
+    .delete-btn {
+        background: rgba(239, 68, 68, 0.1);
+        border: none;
+        color: var(--status-error);
+        width: 32px;
+        height: 32px;
+        border-radius: var(--radius-sm);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: var(--transition-fast);
+    }
+
+    .delete-btn:hover {
+        background: var(--status-error);
+        color: white;
+    }
+
+    .empty-stock {
+        padding: 30px;
+        text-align: center;
+        color: var(--text-muted);
+    }
+
+    .empty-stock i {
+        width: 48px;
+        height: 48px;
+        opacity: 0.2;
+        margin-bottom: var(--spacing-sm);
+    }
+
+    /* Add Stock Zone */
+    .add-stock-zone .form-label {
+        margin-bottom: var(--spacing-sm);
+        display: block;
+    }
+
+    .file-upload-box {
+        border: 2px dashed rgba(16, 185, 129, 0.3);
+        background: rgba(16, 185, 129, 0.05);
+        border-radius: var(--radius-lg);
+        position: relative;
+        transition: var(--transition-fast);
+    }
+
+    .file-upload-box:hover {
+        border-color: var(--primary);
+        background: rgba(16, 185, 129, 0.1);
+    }
+
+    .file-upload-box input[type="file"] {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        opacity: 0;
+        cursor: pointer;
+        z-index: 2;
+    }
+
+    .upload-content {
+        padding: 30px;
+        text-align: center;
+    }
+
+    .icon-circle {
+        width: 48px;
+        height: 48px;
+        background: rgba(16, 185, 129, 0.1);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 12px;
+    }
+
+    .icon-circle i {
+        color: var(--primary);
+        width: 24px;
+    }
+
+    .upload-title {
+        color: var(--primary);
+        font-weight: 500;
+        margin-bottom: 4px;
+    }
+
+    .upload-subtitle {
+        color: var(--text-muted);
+        font-size: 0.8rem;
+    }
+
+    /* Preview List */
+    .preview-container {
+        background: var(--bg-elevated);
+        border-radius: var(--radius-md);
+        padding: 16px;
+        border: 1px solid var(--border-color);
+        animation: fadeIn 0.3s ease;
+        margin-top: var(--spacing-md);
+    }
+
+    .preview-header {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 12px;
+        font-size: 0.85rem;
+    }
+
+    .success-text {
+        color: var(--primary);
+        font-weight: 600;
+    }
+
+    .size-text {
+        color: var(--text-muted);
+    }
+
+    .preview-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 8px;
+    }
+
+    .file-badge {
+        background: rgba(255, 255, 255, 0.05);
+        padding: 8px 12px;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        border: 1px solid var(--border-color);
+    }
+
+    .file-badge i {
+        width: 14px;
+        color: var(--primary);
+    }
+
+    /* Actions */
+    .form-actions {
+        margin-top: 40px;
+        display: flex;
+        gap: 16px;
+    }
+
+    .btn-cancel {
+        flex: 1;
+        padding: 14px;
+        border-radius: var(--radius-md);
+        background: var(--bg-elevated);
+        color: var(--text-primary);
+        text-align: center;
+        text-decoration: none;
+        border: 1px solid var(--border-color);
+        transition: var(--transition-fast);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .btn-cancel:hover {
+        background: var(--bg-hover);
+        border-color: var(--border-light);
+    }
+
+    .btn-submit {
+        flex: 2;
+        padding: 14px;
+        border-radius: var(--radius-md);
+        background: var(--primary);
+        color: white;
+        border: none;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        cursor: pointer;
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        transition: var(--transition-fast);
+    }
+
+    .btn-submit:hover {
+        background: var(--primary-dark);
+        transform: translateY(-2px);
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+</style>
+{% endblock %}

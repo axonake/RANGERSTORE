@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Line Ranger ID Store{% endblock %}</title>
+    <meta name="description" content="ซื้อขายไอดีเกม Line Ranger คุณภาพ พร้อมระบบ Link ID อัตโนมัติ">
+
+    <!-- Fonts -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- Main CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+    <style>
+        /* Modern Navbar Override */
+        .navbar {
+            background: rgba(10, 10, 10, 0.8);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 1rem 0;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .navbar .container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .navbar-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 800;
+            font-size: 1.5rem;
+            color: white;
+            letter-spacing: -0.5px;
+        }
+
+        .navbar-brand i {
+            color: var(--primary);
+            width: 32px;
+            height: 32px;
+        }
+
+        .navbar-nav {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 16px;
+            border-radius: 12px;
+            text-decoration: none;
+            color: var(--text-secondary);
+            font-weight: 500;
+            font-size: 0.938rem;
+            transition: all 0.2s ease;
+        }
+
+        .nav-link:hover {
+            color: white;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .nav-link.active {
+            color: var(--primary);
+            background: rgba(16, 185, 129, 0.1);
+        }
+
+        .nav-auth {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        /* User Menu */
+        .user-menu {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 6px;
+            padding-right: 16px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 50px;
+        }
+
+        .user-avatar {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, var(--bg-elevated), var(--bg-card));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-muted);
+            border: 1px solid var(--border-color);
+        }
+
+        .user-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .user-name {
+            font-size: 0.813rem;
+            font-weight: 600;
+            color: white;
+            line-height: 1.2;
+        }
+
+        .user-balance {
+            font-size: 0.75rem;
+            color: var(--primary);
+            font-weight: 700;
+        }
+
+        .btn-logout {
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            color: var(--text-secondary);
+            background: transparent;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.2s ease;
+        }
+
+        .btn-logout:hover {
+            color: #ef4444;
+            border-color: rgba(239, 68, 68, 0.3);
+            background: rgba(239, 68, 68, 0.1);
+        }
+
+        .btn-topup-sm {
+            padding: 8px 16px;
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: white;
+            border-radius: 50px;
+            font-size: 0.813rem;
+            font-weight: 600;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+            border: none;
+        }
+
+        .btn-topup-sm:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(245, 158, 11, 0.4);
+        }
+
+        /* Mobile Menu */
+        .mobile-toggle {
+            display: none;
+            color: white;
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        @media (max-width: 900px) {
+            .mobile-toggle {
+                display: block;
+            }
+
+            .navbar-nav {
+                display: none;
+                position: absolute;
+                top: 100%;
+                left: 0;
+                right: 0;
+                background: var(--bg-dark);
+                flex-direction: column;
+                padding: 20px;
+                border-bottom: 1px solid var(--border-color);
+            }
+
+            .navbar-nav.active {
+                display: flex;
+            }
+
+            .nav-link {
+                width: 100%;
+                justify-content: flex-start;
+            }
+        }
+    </style>
+
+    {% block extra_css %}{% endblock %}
+</head>
+
+<body>
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="container">
+            <a href="{{ url_for('home') }}" class="navbar-brand">
+                <i data-lucide="zap"></i>
+                <span>RANGER<span style="color: var(--primary);">STORE</span></span>
+            </a>
+
+            <button class="mobile-toggle" onclick="toggleMenu()">
+                <i data-lucide="menu"></i>
+            </button>
+
+            <ul class="navbar-nav" id="navbarMenu">
+                <li>
+                    <a href="{{ url_for('home') }}"
+                        class="nav-link {% if request.endpoint == 'home' %}active{% endif %}">
+                        <i data-lucide="home" style="width: 18px;"></i>
+                        หน้าหลัก
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('products') }}"
+                        class="nav-link {% if request.endpoint == 'products' %}active{% endif %}">
+                        <i data-lucide="shopping-bag" style="width: 18px;"></i>
+                        สินค้าทั้งหมด
+                    </a>
+                </li>
+                {% if current_user.is_authenticated %}
+                <li>
+                    <a href="{{ url_for('inventory') }}"
+                        class="nav-link {% if request.endpoint == 'inventory' %}active{% endif %}">
+                        <i data-lucide="package" style="width: 18px;"></i>
+                        คลังของฉัน
+                    </a>
+                </li>
+                {% if current_user.is_admin %}
+                <li>
+                    <a href="{{ url_for('admin_dashboard') }}"
+                        class="nav-link {% if 'admin' in request.endpoint %}active{% endif %}">
+                        <i data-lucide="shield" style="width: 18px;"></i>
+                        จัดการระบบ
+                    </a>
+                </li>
+                {% endif %}
+                {% endif %}
+            </ul>
+
+            <div class="nav-auth">
+                {% if current_user.is_authenticated %}
+                <a href="{{ url_for('topup_page') }}" class="btn-topup-sm">
+                    <i data-lucide="plus-circle" style="width: 16px;"></i> เติมเงิน
+                </a>
+
+                <div class="user-menu">
+                    <div class="user-avatar">
+                        <i data-lucide="user" style="width: 20px;"></i>
+                    </div>
+                    <div class="user-info">
+                        <span class="user-name">{{ current_user.username }}</span>
+                        <span class="user-balance">฿{{ "{:,.2f}".format(current_user.balance) }}</span>
+                    </div>
+                </div>
+
+                <a href="{{ url_for('logout') }}" class="btn-logout" title="ออกจากระบบ">
+                    <i data-lucide="log-out" style="width: 18px;"></i>
+                </a>
+                {% else %}
+                <a href="{{ url_for('login') }}" class="nav-link">
+                    เข้าสู่ระบบ
+                </a>
+                <a href="{{ url_for('register') }}" class="btn btn-primary btn-sm"
+                    style="padding: 10px 24px; border-radius: 50px;">
+                    สมัครสมาชิก
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+
+    <!-- Alert Container -->
+    <div class="alert-container"></div>
+
+    <!-- Toast Container -->
+    <div id="toast-container"
+        style="position: fixed; bottom: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px;">
+    </div>
+
+    <!-- Alert Modal Template -->
+    <div id="alertModal" class="modal-overlay" style="z-index: 10000;">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title" id="alertModalTitle">แจ้งเตือน</h3>
+                <button type="button" class="modal-close" onclick="closeModal('alertModal')">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p id="alertModalMessage" style="color: var(--text-secondary); line-height: 1.6;"></p>
+            </div>
+            <div class="modal-footer"
+                style="padding-top: var(--spacing-lg); border-top: 1px solid var(--border-color);">
+                <button type="button" class="btn btn-primary" onclick="closeModal('alertModal')"
+                    style="width: 100%;">ตกลง</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Flash Messages Handler -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            {% for category, message in messages %}
+            {% if category == 'error' or category == 'critical' %}
+            // Show modal for errors
+            document.getElementById('alertModalTitle').textContent = '{{ "ข้อผิดพลาด" if category == "error" else "แจ้งเตือนสำคัญ" }}';
+            document.getElementById('alertModalMessage').textContent = '{{ message }}';
+            openModal('alertModal');
+            {% else %}
+            // Show toast for success/info
+            showToast('{{ message }}', '{{ category }}');
+            {% endif %}
+            {% endfor %}
+        });
+
+        function showToast(message, category) {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${category}`;
+            toast.style.cssText = `
+                background: var(--bg-elevated);
+                border: 1px solid var(--border-color);
+                border-left: 4px solid ${category === 'success' ? '#10b981' : '#3b82f6'};
+                padding: 16px 20px;
+                border-radius: 12px;
+                box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                min-width: 300px;
+                transform: translateX(100%);
+                transition: transform 0.3s ease;
+                color: var(--text-primary);
+            `;
+
+            const icon = category === 'success' ? 'check-circle' : 'info';
+            const color = category === 'success' ? '#10b981' : '#3b82f6';
+
+            toast.innerHTML = `
+                <i data-lucide="${icon}" style="color: ${color}; width: 20px; height: 20px;"></i>
+                <span style="font-size: 0.938rem;">${message}</span>
+            `;
+
+            container.appendChild(toast);
+            lucide.createIcons();
+
+            // Animate in
+            requestAnimationFrame(() => {
+                toast.style.transform = 'translateX(0)';
+            });
+
+            // Remove after 3s
+            setTimeout(() => {
+                toast.style.transform = 'translateX(100%)';
+                setTimeout(() => toast.remove(), 300);
+            }, 5000);
+        }
+    </script>
+    {% endif %}
+    {% endwith %}
+
+    <!-- Main Content -->
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer
+        style="margin-top: auto; padding: 60px 0 30px; background: var(--bg-card); border-top: 1px solid var(--border-color);">
+        <div class="container" style="text-align: center;">
+            <div style="margin-bottom: 20px;">
+                <a href="{{ url_for('home') }}" class="navbar-brand"
+                    style="justify-content: center; font-size: 1.25rem;">
+                    <i data-lucide="zap"></i>
+                    <span>RANGER<span style="color: var(--primary);">STORE</span></span>
+                </a>
+            </div>
+            <p style="color: var(--text-muted); font-size: 0.875rem;">&copy; 2024 Line Ranger ID Store. All rights
+                reserved.</p>
+        </div>
+    </footer>
+
+    <!-- Main JS -->
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+
+    <!-- Initialize Lucide Icons -->
+    <script>
+        lucide.createIcons();
+
+        function toggleMenu() {
+            document.getElementById('navbarMenu').classList.toggle('active');
+        }
+    </script>
+
+    {% block extra_js %}{% endblock %}
+</body>
+
+</html>

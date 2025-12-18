@@ -1,0 +1,783 @@
+{% extends "base.html" %}
+
+{% block title %}คลังของฉัน - Line Ranger ID Store{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Inventory Page Styles */
+    .inventory-page {
+        min-height: calc(100vh - 200px);
+        padding: var(--spacing-2xl) 0;
+    }
+
+    .page-header {
+        text-align: center;
+        margin-bottom: var(--spacing-2xl);
+    }
+
+    .page-header h1 {
+        font-size: 2rem;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: var(--spacing-md);
+        margin-bottom: var(--spacing-sm);
+    }
+
+    .page-header h1 i {
+        color: var(--primary);
+    }
+
+    .page-header p {
+        color: var(--text-secondary);
+    }
+
+    /* Inventory Grid */
+    .inventory-grid {
+        display: grid;
+        gap: var(--spacing-lg);
+    }
+
+    /* Inventory Item Card */
+    .inventory-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-xl);
+        overflow: hidden;
+        transition: all 0.2s ease;
+    }
+
+    .inventory-card:hover {
+        border-color: var(--border-light);
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+    }
+
+    .inventory-card-content {
+        display: grid;
+        grid-template-columns: 120px 1fr auto;
+        gap: var(--spacing-lg);
+        padding: var(--spacing-lg);
+        align-items: center;
+    }
+
+    @media (max-width: 768px) {
+        .inventory-card-content {
+            grid-template-columns: 1fr;
+            text-align: center;
+        }
+    }
+
+    .inventory-image {
+        width: 120px;
+        height: 120px;
+        border-radius: var(--radius-lg);
+        overflow: hidden;
+        background: var(--bg-elevated);
+        flex-shrink: 0;
+    }
+
+    .inventory-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .inventory-image-placeholder {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, var(--bg-elevated), var(--bg-card));
+    }
+
+    .inventory-image-placeholder i {
+        font-size: 48px;
+        color: var(--text-muted);
+        opacity: 0.5;
+    }
+
+    .inventory-info {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .inventory-info h3 {
+        font-size: 1.25rem;
+        font-weight: 600;
+        margin-bottom: var(--spacing-sm);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .inventory-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--spacing-md);
+        margin-bottom: var(--spacing-md);
+    }
+
+    .inventory-meta-item {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-xs);
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+    }
+
+    .inventory-meta-item i {
+        color: var(--text-muted);
+        flex-shrink: 0;
+    }
+
+    .inventory-price {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--primary);
+    }
+
+    .inventory-status {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: var(--spacing-sm);
+    }
+
+    @media (max-width: 768px) {
+        .inventory-status {
+            align-items: center;
+            flex-direction: row;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+    }
+
+    /* Status Badges */
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--spacing-xs);
+        padding: var(--spacing-xs) var(--spacing-md);
+        border-radius: var(--radius-full);
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .status-badge.pending {
+        background: rgba(245, 158, 11, 0.15);
+        color: #f59e0b;
+    }
+
+    .status-badge.processing {
+        background: rgba(59, 130, 246, 0.15);
+        color: #3b82f6;
+    }
+
+    .status-badge.done {
+        background: rgba(16, 185, 129, 0.15);
+        color: #10b981;
+    }
+
+    .status-badge i {
+        font-size: 14px;
+    }
+
+    /* Action Buttons */
+    .inventory-actions {
+        display: flex;
+        gap: var(--spacing-sm);
+        margin-top: var(--spacing-md);
+    }
+
+    .action-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: var(--spacing-xs);
+        padding: var(--spacing-sm) var(--spacing-md);
+        border-radius: var(--radius-md);
+        font-size: 0.813rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        border: none;
+    }
+
+    .action-btn-primary {
+        background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+        color: white;
+        box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3);
+    }
+
+    .action-btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+    }
+
+    .action-btn-secondary {
+        background: var(--bg-elevated);
+        color: var(--text-secondary);
+        border: 1px solid var(--border-color);
+    }
+
+    .action-btn-secondary:hover {
+        background: var(--bg-hover);
+        color: var(--text-primary);
+        border-color: var(--border-light);
+    }
+
+    .action-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none !important;
+    }
+
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: var(--spacing-3xl);
+    }
+
+    .empty-state-icon {
+        width: 100px;
+        height: 100px;
+        background: var(--bg-elevated);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto var(--spacing-xl);
+    }
+
+    .empty-state-icon i {
+        font-size: 48px;
+        color: var(--text-muted);
+    }
+
+    .empty-state h3 {
+        font-size: 1.5rem;
+        margin-bottom: var(--spacing-sm);
+    }
+
+    .empty-state p {
+        color: var(--text-muted);
+        margin-bottom: var(--spacing-xl);
+    }
+
+    /* Modal Styles */
+    .link-modal .modal {
+        max-width: 480px;
+    }
+
+    .modal-body {
+        padding: var(--spacing-lg) 0;
+    }
+
+    .form-group {
+        margin-bottom: var(--spacing-lg);
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: var(--spacing-sm);
+        font-weight: 600;
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+    }
+
+    .radio-group {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: var(--spacing-md);
+    }
+
+    .radio-card {
+        cursor: pointer;
+        padding: var(--spacing-lg);
+        border: 2px solid var(--border-color);
+        border-radius: var(--radius-lg);
+        text-align: center;
+        transition: all 0.2s ease;
+    }
+
+    .radio-card:hover {
+        border-color: var(--border-light);
+    }
+
+    .radio-card input {
+        display: none;
+    }
+
+    .radio-card.selected {
+        border-color: var(--primary);
+        background: rgba(16, 185, 129, 0.1);
+    }
+
+    .radio-card-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: var(--radius-md);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto var(--spacing-sm);
+        font-size: 24px;
+    }
+
+    .radio-card-icon.line {
+        background: rgba(0, 185, 0, 0.15);
+        color: #00B900;
+    }
+
+    .radio-card-icon.google {
+        background: rgba(219, 68, 55, 0.15);
+        color: #DB4437;
+    }
+
+    .radio-card-label {
+        font-weight: 600;
+        font-size: 0.938rem;
+    }
+
+    .input-with-icon {
+        position: relative;
+    }
+
+    .input-with-icon i {
+        position: absolute;
+        left: 14px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--text-muted);
+        pointer-events: none;
+    }
+
+    .input-with-icon input {
+        width: 100%;
+        padding: var(--spacing-md) var(--spacing-lg);
+        padding-left: 44px;
+        background: var(--bg-elevated);
+        border: 2px solid var(--border-color);
+        border-radius: var(--radius-lg);
+        color: var(--text-primary);
+        font-size: 0.938rem;
+        transition: all 0.2s ease;
+    }
+
+    .input-with-icon input:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.15);
+    }
+
+    .input-with-icon input::placeholder {
+        color: var(--text-muted);
+    }
+
+    .input-hint {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-xs);
+        margin-top: var(--spacing-xs);
+        font-size: 0.75rem;
+        color: var(--text-muted);
+    }
+
+    .spin {
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        100% {
+            transform: rotate(360deg);
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="inventory-page">
+    <div class="container">
+        <div class="page-header">
+            <h1><i data-lucide="package"></i> คลังของฉัน</h1>
+            <p>รายการสินค้าที่คุณซื้อ พร้อมตัวเลือก Link ID หรือ Download XML</p>
+        </div>
+
+        {% if orders %}
+        <div class="inventory-grid">
+            {% for order in orders %}
+            <div class="inventory-card" data-order-id="{{ order.id }}">
+                <div class="inventory-card-content">
+                    <!-- Image -->
+                    <div class="inventory-image">
+                        {% if order.product.image_path %}
+                        <img src="{{ url_for('static', filename='images/' + order.product.image_path) }}"
+                            alt="{{ order.product.name }}">
+                        {% else %}
+                        <div class="inventory-image-placeholder">
+                            <i data-lucide="gamepad-2"></i>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Info -->
+                    <div class="inventory-info">
+                        <h3>{{ order.product.name }}</h3>
+                        <div class="inventory-meta">
+                            <div class="inventory-meta-item">
+                                <i data-lucide="calendar"></i>
+                                <span>{{ order.created_at.strftime('%d/%m/%Y %H:%M') }}</span>
+                            </div>
+                            <div class="inventory-meta-item">
+                                <i data-lucide="file-code"></i>
+                                <span class="truncate max-w-[200px]" title="{{ order.stock_item.xml_file }}">
+                                    {{ order.stock_item.xml_file if order.stock_item else 'No File' }}
+                                </span>
+                            </div>
+                            {% if order.link_method %}
+                            <div class="inventory-meta-item">
+                                <i data-lucide="link"></i>
+                                <span>{{ 'Google' if order.link_method == 'google' else 'LINE' }}</span>
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div class="inventory-price">฿{{ "%.2f"|format(order.product.price) }}</div>
+
+                        <!-- Action Buttons -->
+                        <div class="inventory-actions">
+                            {% if order.status == 'pending' %}
+                            <button class="action-btn action-btn-primary"
+                                onclick="openLinkModal({{ order.id }}, '{{ order.product.name }}')">
+                                <i data-lucide="link"></i>
+                                Link ID
+                            </button>
+                            {% elif order.status == 'done' %}
+                            <button class="action-btn action-btn-secondary" disabled>
+                                <i data-lucide="check-circle"></i>
+                                Linked
+                            </button>
+                            {% else %}
+                            <button class="action-btn action-btn-secondary" disabled>
+                                <i data-lucide="loader" class="spin"></i>
+                                Processing...
+                            </button>
+                            {% endif %}
+
+                            <a href="{{ url_for('download_xml', order_id=order.id) }}"
+                                class="action-btn action-btn-secondary">
+                                <i data-lucide="download"></i>
+                                Download XML
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Status -->
+                    <div class="inventory-status">
+                        {% if order.status == 'pending' %}
+                        <span class="status-badge pending">
+                            <i data-lucide="clock"></i>
+                            รอ Link ID
+                        </span>
+                        {% elif order.status == 'processing' %}
+                        <span class="status-badge processing">
+                            <i data-lucide="loader" class="spin"></i>
+                            กำลังดำเนินการ
+                        </span>
+                        {% elif order.status == 'done' %}
+                        <span class="status-badge done">
+                            <i data-lucide="check-circle"></i>
+                            เสร็จสิ้น
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-state-icon">
+                <i data-lucide="shopping-cart"></i>
+            </div>
+            <h3>ยังไม่มีรายการซื้อ</h3>
+            <p>คุณยังไม่ได้ซื้อสินค้าใดๆ ไปเลือกซื้อ ID เก๋ๆ กันเลย!</p>
+            <a href="{{ url_for('products') }}" class="btn btn-primary">
+                <i data-lucide="shopping-bag"></i>
+                ดูสินค้าทั้งหมด
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Link ID Modal -->
+<div id="linkModal" class="modal-overlay link-modal">
+    <div class="modal">
+        <div class="modal-header">
+            <h3 class="modal-title"><i data-lucide="link"></i> Link ID</h3>
+            <button type="button" class="modal-close" onclick="closeModal('linkModal')">
+                <i data-lucide="x"></i>
+            </button>
+        </div>
+
+        <form id="linkForm" onsubmit="handleLinkSubmit(event)">
+            <input type="hidden" id="linkOrderId" name="order_id">
+
+            <div class="modal-body">
+                <p style="color: var(--text-secondary); margin-bottom: var(--spacing-lg);">
+                    กรอกข้อมูลบัญชีเพื่อทำการ Link ID อัตโนมัติสำหรับ <strong id="linkProductName"></strong>
+                </p>
+
+                <!-- Link Method Selection -->
+                <div class="form-group">
+                    <label>เลือกประเภทบัญชีเกม</label>
+                    <div class="radio-group">
+                        <label class="radio-card selected" data-value="line" onclick="selectLinkMethod('line')">
+                            <input type="radio" name="link_method" value="line" checked>
+                            <div class="radio-card-icon line">
+                                <i data-lucide="message-circle"></i>
+                            </div>
+                            <div class="radio-card-label">LINE</div>
+                        </label>
+                        <label class="radio-card" data-value="google" onclick="selectLinkMethod('google')">
+                            <input type="radio" name="link_method" value="google">
+                            <div class="radio-card-icon google">
+                                <i data-lucide="mail"></i>
+                            </div>
+                            <div class="radio-card-label">Google</div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Email/ID Input -->
+                <div class="form-group">
+                    <label for="customer_id">อีเมล / LINE ID</label>
+                    <div class="input-with-icon">
+                        <i data-lucide="user"></i>
+                        <input type="text" id="customer_id" name="customer_id"
+                            placeholder="กรอก Email หรือ LINE ID ของคุณ" required>
+                    </div>
+                </div>
+
+                <!-- Password Input -->
+                <div class="form-group">
+                    <label for="customer_pass">รหัสผ่าน</label>
+                    <div class="input-with-icon">
+                        <i data-lucide="lock"></i>
+                        <input type="password" id="customer_pass" name="customer_pass" placeholder="กรอกรหัสผ่าน"
+                            required>
+                    </div>
+                    <div class="input-hint">
+                        <i data-lucide="shield-check" style="color: var(--primary);"></i>
+                        <span>ข้อมูลของคุณจะถูกเก็บเป็นความลับและใช้เพื่อการ Link ID เท่านั้น</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer"
+                style="display: flex; gap: var(--spacing-md); padding-top: var(--spacing-lg); border-top: 1px solid var(--border-color);">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('linkModal')" style="flex: 1;">
+                    ยกเลิก
+                </button>
+                <button type="submit" class="btn btn-primary" style="flex: 2;">
+                    <i data-lucide="play"></i>
+                    เริ่ม Link ID
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Loading Overlay -->
+<div id="loadingOverlay" class="modal-overlay" style="z-index: 2000;">
+    <div class="modal" style="text-align: center; padding: 40px; max-width: 360px;">
+        <i data-lucide="loader" class="spin"
+            style="width: 48px; height: 48px; color: var(--primary); margin-bottom: 20px;"></i>
+        <h3 id="loadingTitle">กำลังดำเนินการ...</h3>
+        <p id="loadingStatus" style="color: var(--text-secondary); margin-top: 10px;">รอสักครู่...</p>
+    </div>
+</div>
+
+<!-- 2FA Confirmation Modal -->
+<div id="verify2FAModal" class="modal-overlay" style="z-index: 2100;">
+    <div class="modal">
+        <div class="modal-header">
+            <h3 class="modal-title"><i data-lucide="shield-alert"></i> ยืนยันตัวตน 2FA</h3>
+        </div>
+        <div class="modal-body" style="text-align: center;">
+            <p>ระบบตรวจพบว่าบัญชี Google ของคุณต้องการการยืนยันตัวตน</p>
+            <div
+                style="margin: 20px 0; background: var(--bg-elevated); padding: 20px; border-radius: 12px; border: 2px solid var(--primary);">
+                <div style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 5px;">รหัสยืนยันของคุณคือ</div>
+                <div id="2faCodeDisplay"
+                    style="font-size: 3rem; font-weight: 800; color: var(--primary); letter-spacing: 2px;">--</div>
+            </div>
+            <p>กรุณากดรหัสนี้บนมือถือของคุณ หรือนำไปกรอกเพื่อยืนยัน</p>
+            <p style="margin-top: 10px; font-size: 0.9rem; color: #ff9800;">
+                <i data-lucide="alert-triangle" style="width: 14px; vertical-align: middle;"></i>
+                ต้องกดยืนยันภายในเวลาที่กำหนด
+            </p>
+        </div>
+        <div class="modal-footer" style="padding-top: var(--spacing-lg); border-top: 1px solid var(--border-color);">
+            <button class="btn btn-primary" style="width: 100%;" onclick="confirm2FA()">
+                ยืนยันเรียบร้อยแล้ว
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let currentOrderId = null;
+
+    function selectLinkMethod(method) {
+        // Update radio buttons
+        document.querySelectorAll('.radio-card').forEach(card => {
+            card.classList.remove('selected');
+            if (card.dataset.value === method) {
+                card.classList.add('selected');
+                card.querySelector('input').checked = true;
+            }
+        });
+    }
+
+    function openLinkModal(orderId, productName) {
+        currentOrderId = orderId;
+        document.getElementById('linkOrderId').value = orderId;
+        document.getElementById('linkProductName').textContent = productName;
+
+        // Reset form
+        document.getElementById('linkForm').reset();
+        selectLinkMethod('line');
+
+        // Open modal
+        openModal('linkModal');
+        lucide.createIcons();
+    }
+
+    async function handleLinkSubmit(event) {
+        event.preventDefault();
+
+        const form = event.target;
+        const formData = new FormData(form);
+        const orderId = document.getElementById('linkOrderId').value;
+
+        // Close modal, show loading
+        closeModal('linkModal');
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        const loadingStatus = document.getElementById('loadingStatus');
+        loadingOverlay.classList.add('active');
+        loadingStatus.textContent = "กำลังบันทึกข้อมูล...";
+
+        try {
+            // Save credentials
+            const response = await fetch(`/api/order/${orderId}/link`, {
+                method: 'POST',
+                body: formData
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                loadingStatus.textContent = "กำลังเริ่มกระบวนการ Link ID...";
+                // Start streaming automation
+                startStreaming(orderId);
+            } else {
+                loadingOverlay.classList.remove('active');
+                alert("❌ " + (data.message || "เกิดข้อผิดพลาด"));
+            }
+        } catch (error) {
+            console.error(error);
+            loadingOverlay.classList.remove('active');
+            alert("❌ เกิดข้อผิดพลาด: " + error.message);
+        }
+    }
+
+    function startStreaming(orderId) {
+        const loadingStatus = document.getElementById('loadingStatus');
+        const source = new EventSource(`/api/stream_automation/${orderId}`);
+
+        source.onmessage = function (event) {
+            const msg = event.data;
+            console.log("Stream:", msg);
+
+            if (msg.startsWith("VERIFICATION_CODE:")) {
+                const code = msg.split(":")[1];
+                source.close();
+                show2FACode(code);
+            } else if (msg.startsWith("SUCCESS:")) {
+                source.close();
+                alert("✅ ดำเนินการเสร็จสมบูรณ์!");
+                location.reload();
+            } else if (msg.startsWith("ERROR:")) {
+                source.close();
+                alert("❌ เกิดข้อผิดพลาด: " + msg.split(":")[1]);
+                location.reload();
+            } else {
+                // Remove "STATUS:" prefix if present
+                const displayMsg = msg.replace(/^STATUS:/, '');
+                loadingStatus.textContent = displayMsg;
+            }
+        };
+
+        source.onerror = function (err) {
+            console.error("Stream Error", err);
+            source.close();
+        };
+    }
+
+    function show2FACode(code) {
+        document.getElementById('loadingOverlay').classList.remove('active');
+        document.getElementById('verify2FAModal').classList.add('active');
+        document.getElementById('2faCodeDisplay').textContent = code;
+        lucide.createIcons();
+    }
+
+    async function confirm2FA() {
+        if (!currentOrderId) return;
+
+        // Hide 2FA Modal
+        document.getElementById('verify2FAModal').classList.remove('active');
+
+        // Show Loading Overlay again
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        const loadingStatus = document.getElementById('loadingStatus');
+        loadingOverlay.classList.add('active');
+        loadingStatus.textContent = "กำลังดำเนินการ Phase 2... (กรุณารอสักครู่)";
+
+        // Connect to stream
+        const source = new EventSource(`/api/stream_phase2/${currentOrderId}`);
+
+        source.onmessage = function (event) {
+            const msg = event.data;
+            console.log("Phase2 Stream:", msg);
+
+            if (msg.startsWith("SUCCESS:")) {
+                source.close();
+                alert("✅ ดำเนินการ Phase 2 เสร็จสิ้นสมบูรณ์!");
+                location.reload();
+            } else if (msg.startsWith("ERROR:")) {
+                source.close();
+                alert("❌ เกิดข้อผิดพลาดใน Phase 2: " + msg.split(":")[1]);
+                location.reload();
+            } else {
+                const displayMsg = msg.replace(/^STATUS:/, '');
+                loadingStatus.textContent = displayMsg;
+            }
+        };
+
+        source.onerror = function (err) {
+            console.error("Phase2 Stream Error", err);
+            if (source.readyState === EventSource.CLOSED) {
+                loadingStatus.textContent = "Connection Lost. Refreshing...";
+                setTimeout(() => {
+                    location.reload();
+                }, 3000);
+            }
+        };
+    }
+</script>
+{% endblock %}
